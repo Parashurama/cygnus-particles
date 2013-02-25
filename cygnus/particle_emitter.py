@@ -17,10 +17,10 @@ from particle_emitter_2nd import PerParticleEmitter
 
 from particle_emitter_vars import DEFAULT_MAX_PARTICLE_BUFFER_SIZE,\
                                   PARTICLE_DATA_SIZE,\
-                                  EMITTER_REF,\
                                   EMITTER_UNIFORMS_SRC_DATA,\
                                   EMITTER_UNIFORMS_LIST,\
-                                  DOMAIN_REF
+                                  DOMAIN_REF,\
+                                  EMITTER_TYPE_REF
 
 from root import cVars, default_particle_system, GenId, ReferenceName
 
@@ -28,8 +28,6 @@ import numpy as np
 import time
 import weakref
 import random
-
-EMITTER_TYPE = { 'PointEmitter':0, 'CircleEmitter':1, 'DiscEmitter':2, 'LineEmitter':3, 'TriangleEmitter':4, 'SquareEmitter':5, 'SphereEmitter':6 }
 
 class Emitter(BasicEmitter):
     def __init__(self, name, position, fire_rate, particle_template, particle_deviation={}, controllers=[], renderer=None, system=default_particle_system):
@@ -83,12 +81,12 @@ class Emitter(BasicEmitter):
         
     def select_emitter_type(self, position, particle_template):
         
-        if   isinstance(position, tuple):   self.emitter_type=EMITTER_TYPE['PointEmitter']; self.emitter_position = tuple(position)# self.emitter_flag=Flag('PointEmitter', position) ; self.emitter_position = Vec3(*position)
-        elif isinstance(position, Square):  self.emitter_type=EMITTER_TYPE['SquareEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
-        elif isinstance(position, Line):    self.emitter_type=EMITTER_TYPE['LineEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
-        elif isinstance(position, Triangle):self.emitter_type=EMITTER_TYPE['TriangleEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
-        elif isinstance(position, Disc):    self.emitter_type=EMITTER_TYPE['CircleEmitter'] if position.inner_radius==position.outer_radius else EMITTER_TYPE['DiscEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
-        elif isinstance(position, Sphere):  self.emitter_type=EMITTER_TYPE['SphereEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
+        if   isinstance(position, tuple):   self.emitter_type=EMITTER_TYPE_REF['PointEmitter']; self.emitter_position = tuple(position)
+        elif isinstance(position, Square):  self.emitter_type=EMITTER_TYPE_REF['SquareEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
+        elif isinstance(position, Line):    self.emitter_type=EMITTER_TYPE_REF['LineEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
+        elif isinstance(position, Triangle):self.emitter_type=EMITTER_TYPE_REF['TriangleEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
+        elif isinstance(position, Disc):    self.emitter_type=EMITTER_TYPE_REF['CircleEmitter'] if position.inner_radius==position.outer_radius else EMITTER_TYPE_REF['DiscEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
+        elif isinstance(position, Sphere):  self.emitter_type=EMITTER_TYPE_REF['SphereEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
         else: raise ValueError("Invalid Emitter Type {},{}".format(type(position), position))
         
         if   isinstance(particle_template, Particle):
@@ -109,7 +107,6 @@ class Emitter(BasicEmitter):
             self.update_shader = cVars.UpdateShader
             self.update_function = update_complex_particle_emitter
             
-            #raise NotImplementedError('')
             if self.renderer_flag == 'MeshRenderer':
                   raise NotImplementedError('')
             else:
@@ -234,16 +231,10 @@ def emit_new_particles(self, dt):
     Uniforms = self.emitter_shader.Uniforms
     
     self.emission_time+=dt
-    #if self.emission_time>1.0:
-    #    self.emission_time=0.0
-    #    self.real_emitted_particles=0
     
     virtual_emitted_particles = int(self.emitter_fire_rate*self.emission_time)
     particles_to_emit = (virtual_emitted_particles-self.real_emitted_particles)
     
-    #if particles_to_emit:
-    #    print "particles_to_emit", particles_to_emit
-        
     if self.particles_burst is not None:
         particles_to_emit = self.particles_burst[0]
         self.particles_burst = None
@@ -290,7 +281,6 @@ def update_particles(self, dt):
     glUniform1f( Uniforms['dtime'], dt)
     
     with TransformFeedback(self.VBO_FeedBack, GL_POINTS, byte_offset=byte_offset, query=self.QO_FeedBack):
-    #with TransformFeedback(self.VBO_FeedBack, GL_POINTS, query=self.QO_FeedBack):
         with self.VAO_A_Update:
             
             glDrawArrays(GL_POINTS, 0, self.particles_count)
@@ -318,71 +308,4 @@ def update_complex_particle_emitter(self, dt):
         
     self.update_updater_uniforms_buffer()
     update_particles(self, dt)
-    
 
-
-"""
-
-def simple_render_mesh(self):
-    VBO_STRIDE=32
-    glUseProgram(self.render_mesh_shader.program)
-    
-    
-    glUniformMatrix4fv(self.render_mesh_shader.Uniforms['ModelView'], 1, False, cVars.ModelViewProjectionMatrix)
-    
-    UpdateMeshRenderState(self, self.render_mesh_shader.Uniforms)
-    Attributes = cVars.render_mesh_objects.Attributes
-    MESH_OBJECT = self.particle_renderer.mesh_object
-    
-    glBindTexture(GL_TEXTURE_2D, MESH_OBJECT.texture.id)
-    
-    glEnableVertexAttribArray( Attributes['Vertex_Position'] )
-    glEnableVertexAttribArray( Attributes['Vertex_TexCoords'] )
-    glEnableVertexAttribArray( Attributes['Instance_Position'] )
-    glEnableVertexAttribArray( Attributes['Instance_Age'] )
-    
-    MESH_OBJECT.Vertex_Position_VBO.bind()
-    glVertexAttribPointer( Attributes['Vertex_Position'], 3, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-    
-    MESH_OBJECT.Vertex_TexCoords_VBO.bind()
-    glVertexAttribPointer( Attributes['Vertex_TexCoords'], 2, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-
-    self.VBO_Geometry.bind()
-    glVertexAttribPointer( Attributes['Instance_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-    glVertexAttribDivisorARB( Attributes['Instance_Position'], 1)
-
-    glVertexAttribPointer( Attributes['Instance_Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
-    glVertexAttribDivisorARB( Attributes['Instance_Age'], 1)
-    
-    glDrawArraysInstancedARB( GL_TRIANGLES, 0 , MESH_OBJECT.Vertex_Count, self.VBO_Geometry.GetPrimitiveCount() ) 
-    
-    
-    glVertexAttribDivisorARB( Attributes['Instance_Position'], 0)
-    glVertexAttribDivisorARB( Attributes['Instance_Age'], 0)
-    
-    glDisableVertexAttribArray( Attributes['Vertex_Position'] )
-    glDisableVertexAttribArray( Attributes['Vertex_TexCoords'] )
-    glDisableVertexAttribArray( Attributes['Instance_Position'] )
-    glDisableVertexAttribArray( Attributes['Instance_Age'] )
-    
-    glUseProgram(0)
-
-def UpdateMeshRenderState(self, Uniforms):
-
-    if self.ColorBlenderController is not None:
-        glUniform1f( Uniforms['ColorBlendLifeTime'], self.ColorBlenderController.end_time -self.ColorBlenderController.start_time)           
-        glUniform1f( Uniforms['COLOR_BLENDING'], 1.0)
-        glBindTexture(GL_TEXTURE_1D, self.ColorBlenderController.ColorBlendLookup.id)
-        
-    else:
-        glUniform1f( Uniforms['ColorBlendLifeTime'], 0.0)
-        glUniform1f( Uniforms['COLOR_BLENDING'], 0.0)
-    
-    if self.GrowthController is not None:
-          glUniform1f( Uniforms['GROWTH_FACTOR'], self.GrowthController.growth)
-    else: glUniform1f( Uniforms['GROWTH_FACTOR'], 0.0)
-    
-    glUniform1f( Uniforms['PARTICLE_SIZE'], (self.particle_template.point_size or self.particle_renderer.point_size))
-    
-    glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *self.particle_template.color)
-"""

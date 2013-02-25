@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# *-* coding: UTF-8 *-*
 
 from OpenGL.GL import *
 
@@ -7,8 +9,6 @@ from particle_renderer import PointRenderer, PointSpriteRenderer, AnimatedPointS
 from particle_emitter_vars import UPDATER_UNIFORMS_SRC_DATA,\
                                   DOMAIN_REF,\
                                   PARTICLE_DATA_SIZE
-
-
 
 class BasicEmitter(object):    
     @property

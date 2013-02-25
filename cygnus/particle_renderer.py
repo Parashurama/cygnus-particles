@@ -56,11 +56,9 @@ class PointRenderer(Renderer):
                 Attributes=cVars.SimplePointRenderShader.Attributes
 
                 glEnableVertexAttribArray( Attributes['Position'] )
-                #glEnableVertexAttribArray( Attributes['Type'])
                 glEnableVertexAttribArray( Attributes['Age'])
                 
                 glVertexAttribPointer( Attributes['Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-                #glVertexAttribPointer( Attributes['Type'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(24) )
                 glVertexAttribPointer( Attributes['Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
     
         self.render_state = self.VAO0
@@ -201,7 +199,7 @@ class AnimatedPointSpriteRenderer(PointRenderer):
     __enter__ = SetState
     
 """
-class MeshRenderer(object):
+class ParticleMeshRenderer(object):
     flag='MESH_RENDERER'
     def __init__(self,  mesh_object,
                         size=1,
@@ -213,4 +211,72 @@ class MeshRenderer(object):
         self.texture = mesh_object.texture
         self.point_size =  size
         self.blending = blending
+"""
+    
+
+
+"""
+
+def simple_render_mesh(self):
+    VBO_STRIDE=32
+    glUseProgram(self.render_mesh_shader.program)
+    
+    
+    glUniformMatrix4fv(self.render_mesh_shader.Uniforms['ModelView'], 1, False, cVars.ModelViewProjectionMatrix)
+    
+    UpdateMeshRenderState(self, self.render_mesh_shader.Uniforms)
+    Attributes = cVars.render_mesh_objects.Attributes
+    MESH_OBJECT = self.particle_renderer.mesh_object
+    
+    glBindTexture(GL_TEXTURE_2D, MESH_OBJECT.texture.id)
+    
+    glEnableVertexAttribArray( Attributes['Vertex_Position'] )
+    glEnableVertexAttribArray( Attributes['Vertex_TexCoords'] )
+    glEnableVertexAttribArray( Attributes['Instance_Position'] )
+    glEnableVertexAttribArray( Attributes['Instance_Age'] )
+    
+    MESH_OBJECT.Vertex_Position_VBO.bind()
+    glVertexAttribPointer( Attributes['Vertex_Position'], 3, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
+    
+    MESH_OBJECT.Vertex_TexCoords_VBO.bind()
+    glVertexAttribPointer( Attributes['Vertex_TexCoords'], 2, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
+
+    self.VBO_Geometry.bind()
+    glVertexAttribPointer( Attributes['Instance_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
+    glVertexAttribDivisorARB( Attributes['Instance_Position'], 1)
+
+    glVertexAttribPointer( Attributes['Instance_Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
+    glVertexAttribDivisorARB( Attributes['Instance_Age'], 1)
+    
+    glDrawArraysInstancedARB( GL_TRIANGLES, 0 , MESH_OBJECT.Vertex_Count, self.VBO_Geometry.GetPrimitiveCount() ) 
+    
+    
+    glVertexAttribDivisorARB( Attributes['Instance_Position'], 0)
+    glVertexAttribDivisorARB( Attributes['Instance_Age'], 0)
+    
+    glDisableVertexAttribArray( Attributes['Vertex_Position'] )
+    glDisableVertexAttribArray( Attributes['Vertex_TexCoords'] )
+    glDisableVertexAttribArray( Attributes['Instance_Position'] )
+    glDisableVertexAttribArray( Attributes['Instance_Age'] )
+    
+    glUseProgram(0)
+
+def UpdateMeshRenderState(self, Uniforms):
+
+    if self.ColorBlenderController is not None:
+        glUniform1f( Uniforms['ColorBlendLifeTime'], self.ColorBlenderController.end_time -self.ColorBlenderController.start_time)           
+        glUniform1f( Uniforms['COLOR_BLENDING'], 1.0)
+        glBindTexture(GL_TEXTURE_1D, self.ColorBlenderController.ColorBlendLookup.id)
+        
+    else:
+        glUniform1f( Uniforms['ColorBlendLifeTime'], 0.0)
+        glUniform1f( Uniforms['COLOR_BLENDING'], 0.0)
+    
+    if self.GrowthController is not None:
+          glUniform1f( Uniforms['GROWTH_FACTOR'], self.GrowthController.growth)
+    else: glUniform1f( Uniforms['GROWTH_FACTOR'], 0.0)
+    
+    glUniform1f( Uniforms['PARTICLE_SIZE'], (self.particle_template.point_size or self.particle_renderer.point_size))
+    
+    glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *self.particle_template.color)
 """

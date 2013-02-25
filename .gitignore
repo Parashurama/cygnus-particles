@@ -33,3 +33,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+#list of exemples
+
+exemple/list_of_exemple.py

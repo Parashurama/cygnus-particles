@@ -3,34 +3,24 @@ from OpenGL.GL.ARB.framebuffer_object import *
 import numpy as np
 import zlib, cPickle
 from decoders import optimized_image_load
+from glObjects import TextureObject
 
-class GLTexture(object):
-    def __init__(self, imagefile, ANISOTROPY=False):
-
+class GLTexture2D(TextureObject):
+    def __init__(self, imagefile, mipmap=True, nearest=False, anisotropic=False, repeat_texture=True):
+        
         decoded_image = optimized_image_load(imagefile)
 
         self.width  = decoded_image.width
         self.height = decoded_image.height
-        self.format = decoded_image.format
         
-        assert (decoded_image.format == 'RGBA'), "\nLe format du fichier image %s n'est pas pris en charge.\nLe fichier doit contenir un canal alpha !\n%s" %(imagefile, decoded_image.format)
-
         self.size=( float(self.width),float(self.height) )
         self.texcoords=(0.0,0.0,1.0,1.0)
         
-        self.id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.id)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.width, self.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded_image.data.ravel())
+        TextureObject.__init__(self, decoded_image.data, size=(self.width,self.height), format=decoded_image.format, internalformat='RGBA', mipmap=mipmap, nearest=nearest, anisotropic=anisotropic, repeat_texture=repeat_texture)
         
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST)
-        if ANISOTROPY: glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0)
-        
-        glGenerateMipmap(GL_TEXTURE_2D)
         
 
-class Animation(GLTexture):
+class Animation(GLTexture2D):
     def __init__(self, imagefile, H,V):
 
         i=imagefile.find('.')

@@ -6,7 +6,7 @@ from __globals__ import cVars
 
 from glLibs.glShaderLibs import BasicShaderObject
 
-from particle_emitter_vars import EMITTER_UNIFORMS_LIST, UPDATER_UNIFORMS_LIST, EMITTER_SECONDARY_UNIFORMS_LIST
+from particle_emitter_vars import EMITTER_UNIFORMS_LIST, UPDATER_UNIFORMS_LIST, EMITTER_SECONDARY_UNIFORMS_LIST, MESH_EMITTER_UNIFORMS_LIST
 
 def SetupSimplePointRenderShader(ShaderObject, *args):
         
@@ -39,6 +39,20 @@ def SetupEmitterShader(ShaderObject, *args):
     ShaderObject.SetupAttributesAndUniforms(UNIFORM_LIST, ATTRIBUTE_LIST, False)
 
     glUniform1i(ShaderObject.Uniforms['RandomTexture'], 0)
+
+    glUseProgram(0)
+
+def SetupMeshEmitterShader(ShaderObject, *args):
+    UNIFORM_LIST= [ 'seed','vertex_count','ModelScale',
+                    'RandomTexture', 'MeshTriangleVertices',
+                    'ParticleSystemcount']
+    
+    ATTRIBUTE_LIST= ('Type',)
+    
+    ShaderObject.SetupAttributesAndUniforms(UNIFORM_LIST, ATTRIBUTE_LIST, False)
+
+    glUniform1i(ShaderObject.Uniforms['RandomTexture'], 0)
+    glUniform1i(ShaderObject.Uniforms['MeshTriangleVertices'], 1)
 
     glUseProgram(0)
 
@@ -89,6 +103,15 @@ def BuildShaders():
     cVars.EmitterShader.set_uniforms=dummy
     cVars.EmitterShader.set_params=dummy
     cVars.EmitterShader.SetTransformFeedbackAttributes(["Position_out", "Velocity_out", "Type_out", "Age_out"], 'Interleaved') # GL_SEPARATE_ATTRIBS_NV,
+    
+    
+    cVars.MeshEmitterShader = BasicShaderObject('MeshEmitterShader', directory=__dir__, vertex_file='emit_mesh_function_shader.vert')       
+    cVars.MeshEmitterShader.SetupUniformBufferInfo("EMITTER_UNIFORMS", MESH_EMITTER_UNIFORMS_LIST )
+    
+    cVars.MeshEmitterShader.init_params = SetupMeshEmitterShader
+    cVars.MeshEmitterShader.set_uniforms=dummy
+    cVars.MeshEmitterShader.set_params=dummy
+    cVars.MeshEmitterShader.SetTransformFeedbackAttributes(["Position_out", "Velocity_out", "Type_out", "Age_out"], 'Interleaved') # GL_SEPARATE_ATTRIBS_NV,
     
     
     cVars.PerParticleEmitterShader = BasicShaderObject('PerParticleEmitterShader', directory=__dir__, vertex_file='emit_secondary_function_shader.vert')       

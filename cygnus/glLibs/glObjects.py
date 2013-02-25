@@ -44,7 +44,7 @@ class BufferObject(object):
             self.data_type=data.dtype.name
             self.data_type_size=data.dtype.itemsize
             self.data_byte_size= self.data_size*data.dtype.itemsize
-            assert self.data_type == 'float32'
+            #assert self.data_type == 'float32'
         
         #if self.data_size>16 : print self.GetData(size=16)
         
@@ -55,23 +55,24 @@ class BufferObject(object):
     
     def bind_asUniformBuffer(self, emplacement=0):        
         glBindBufferBase( GL_UNIFORM_BUFFER, emplacement, self.__buffer__)
-        
-    def bind_asTextureBuffer(self, emplacement=0):
-        glBindBuffer(GL_TEXTURE_BUFFER_ARB, self.__buffer__)
-
-        if not self.isTextureBufferObject:            
+    
+    def bind_asTextureBuffer(self, emplacement=0, texture_format='RGBA32F'):
+        if not self.isTextureBufferObject:
+            glBindBuffer(GL_TEXTURE_BUFFER_ARB, self.__buffer__)
+                     
             self.__texid__ = glGenTextures(1)
             
             glBindTexture(GL_TEXTURE_BUFFER_ARB, self.__texid__);            
-            glTexBufferARB(GL_TEXTURE_BUFFER_ARB, GL_RGBA32F_ARB, self.__buffer__);
+            glTexBufferARB(GL_TEXTURE_BUFFER_ARB, INTERNAL_FORMATS[texture_format], self.__buffer__);
             self.isTextureBufferObject=True
             
+            glBindBuffer(GL_TEXTURE_BUFFER_ARB, 0)
+            
         else:
+            glActiveTexture(GL_TEXTURE0+emplacement)
             glBindTexture(GL_TEXTURE_BUFFER_ARB, self.__texid__)
-        
-        glBindTexture(GL_TEXTURE_BUFFER_ARB, 0);
-        glBindBuffer(GL_TEXTURE_BUFFER_ARB, 0)
-
+            glActiveTexture(GL_TEXTURE0)
+    
     def MajorUpdate(self, data, usage, target=None):        
         if data.ndim >1:  data=data.ravel()
         glBindVertexArray(0)

@@ -22,6 +22,39 @@ class Template(dict):
         
         dict.__init__(self, *args, **kwargs )
 
+from OpenGL.GL import GL_ELEMENT_ARRAY_BUFFER,\
+                      GL_ARRAY_BUFFER,\
+                      GL_STATIC_DRAW
+
+from glLibs.glObjects import BufferObject#, VertexArrayObject
+from mesh_loader import LoadRawMesh
+import numpy as np
+
+class Mesh(object):
+    @classmethod
+    def fromMeshFile(cls, filename):
+        return cls.fromData(*LoadRawMesh(filename))
+    
+    @classmethod
+    def fromData(cls, indices, vertexes):
+        mesh = cls.__new__(cls)
+        mesh.vertex_count = len(vertexes)
+        INDICES = np.asarray(indices, dtype='uint16')
+        VERTEXES = np.asarray(vertexes, dtype='float32')
+        
+        mesh.index_buffer = BufferObject(GL_ELEMENT_ARRAY_BUFFER, INDICES, GL_STATIC_DRAW)
+        mesh.vertexes_buffer = BufferObject(GL_ARRAY_BUFFER, VERTEXES, GL_STATIC_DRAW)
+        return mesh
+        
+    @classmethod
+    def fromBuffers(cls, indices_buffer, vertexes_buffer, vertex_count):
+        mesh = cls.__new__(cls)
+        mesh.index_buffer = indices_buffer
+        mesh.vertexes_buffer = vertexes_buffer
+        return mesh
+
+
+#class ParticleMesh
 """
 import cPickle
 from root import cVars
