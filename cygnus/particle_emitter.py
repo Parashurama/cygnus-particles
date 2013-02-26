@@ -3,8 +3,8 @@
 
 from OpenGL.GL import *
 #from OpenGL.GL.NV.transform_feedback import *
-#from OpenGL.GL.ARB.instanced_arrays import glVertexAttribDivisorARB
-#from OpenGL.GL.ARB.draw_instanced import glInitDrawInstancedARB,glDrawArraysInstancedARB,glDrawElementsInstancedARB
+from OpenGL.GL.ARB.instanced_arrays import glVertexAttribDivisorARB
+from OpenGL.GL.ARB.draw_instanced import glInitDrawInstancedARB,glDrawArraysInstancedARB,glDrawElementsInstancedARB
 
 from glLibs.glObjects import BufferObject, VertexArrayObject, TransformFeedback, QueryObject
 
@@ -87,7 +87,7 @@ class Emitter(BasicEmitter):
         elif isinstance(position, Triangle):self.emitter_type=EMITTER_TYPE_REF['TriangleEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
         elif isinstance(position, Disc):    self.emitter_type=EMITTER_TYPE_REF['CircleEmitter'] if position.inner_radius==position.outer_radius else EMITTER_TYPE_REF['DiscEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
         elif isinstance(position, Sphere):  self.emitter_type=EMITTER_TYPE_REF['SphereEmitter']; self.emitter_domain = position ; self.emitter_position = position.center
-        else: raise ValueError("Invalid Emitter Type {},{}".format(type(position), position))
+        else: raise ValueError("Invalid Emitter Type {},{}".format(position.__class__.__name__, position))
         
         if   isinstance(particle_template, Particle):
             self.emitter_type_flag = 'Basic'
@@ -96,8 +96,8 @@ class Emitter(BasicEmitter):
             self.update_function = update_simple_particle_emitter
             
             if self.renderer_flag == 'MeshRenderer':
-                raise NotImplementedError('')
-                self.render_function = simple_render_mesh
+                #raise NotImplementedError('')
+                self.render = self.render_mesh_simple
             else:
                 self.render = self.render_simple
                 
@@ -216,8 +216,22 @@ class Emitter(BasicEmitter):
             glDrawArrays(GL_POINTS, 0, self.particles_count)
         
         self.particle_template.render()
-
-
+    
+    #"""
+    def render_mesh_simple(self):
+        # render Mesh with ParticleMesh Template
+        MESH_OBJECT = self.particle_renderer.mesh_object
+        
+        with self.particle_renderer:
+            glDrawElementsInstancedARB(GL_TRIANGLES, MESH_OBJECT.indice_count*3, GL_UNSIGNED_SHORT, MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0), self.particles_count )
+    
+    def render_single_mesh_simple(self):
+        # render Mesh with ParticleMesh Template
+        MESH_OBJECT = self.particle_renderer.mesh_object
+        
+        with self.particle_renderer:
+            glDrawElements(GL_TRIANGLES,  MESH_OBJECT.indice_count*3, GL_UNSIGNED_SHORT,  MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0))
+    
 ########## BASIC PARTICLE EMITTER ################
 def update_simple_particle_emitter(self, dt):
     self.update_emitter_uniforms_buffer()

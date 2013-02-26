@@ -28,33 +28,66 @@ from OpenGL.GL import GL_ELEMENT_ARRAY_BUFFER,\
 
 from glLibs.glObjects import BufferObject#, VertexArrayObject
 from mesh_loader import LoadRawMesh
+from utils import ParseBufferData_format
 import numpy as np
 
 class Mesh(object):
+    
+    def create(self, indices, vertexes, data_format):
+        self.vertex_count = len(vertexes)
+        self.indice_count = len(indices)
+        
+        self.data_format = ParseBufferData_format(data_format)
+        
+        INDICES = np.asarray(indices, dtype='uint16')
+        VERTEXES = np.asarray(vertexes, dtype='float32')
+        
+        self.index_buffer = BufferObject(GL_ELEMENT_ARRAY_BUFFER, INDICES, GL_STATIC_DRAW)
+        self.vertexes_buffer = BufferObject(GL_ARRAY_BUFFER, VERTEXES, GL_STATIC_DRAW)
+    
+    def create_from_buffer(self, indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format):
+        self.index_buffer = indices_buffer
+        self.vertexes_buffer = vertexes_buffer
+        self.vertex_count = vertex_count
+        
     @classmethod
     def fromMeshFile(cls, filename):
         return cls.fromData(*LoadRawMesh(filename))
     
     @classmethod
-    def fromData(cls, indices, vertexes):
+    def fromData(cls, indices, vertexes, data_format):
         mesh = cls.__new__(cls)
-        mesh.vertex_count = len(vertexes)
-        INDICES = np.asarray(indices, dtype='uint16')
-        VERTEXES = np.asarray(vertexes, dtype='float32')
+        mesh.create(indices, vertexes, data_format)
         
-        mesh.index_buffer = BufferObject(GL_ELEMENT_ARRAY_BUFFER, INDICES, GL_STATIC_DRAW)
-        mesh.vertexes_buffer = BufferObject(GL_ARRAY_BUFFER, VERTEXES, GL_STATIC_DRAW)
         return mesh
         
     @classmethod
-    def fromBuffers(cls, indices_buffer, vertexes_buffer, vertex_count):
+    def fromBuffers(cls, indices_buffer, vertexes_buffer, vertex_count, indice_count, data_format):
         mesh = cls.__new__(cls)
-        mesh.index_buffer = indices_buffer
-        mesh.vertexes_buffer = vertexes_buffer
+        mesh.create_from_buffer(indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format)
         return mesh
 
 
-#class ParticleMesh
+class ParticleMesh(Mesh):
+    def __init__(self,  mesh_file=None,
+                        texture=None):
+        
+        self.mesh = Mesh.fromMeshFile(mesh_file)
+        self.texture = texture
+        
+        self.VBO_Vertex_Data = self.mesh.vertexes_buffer
+        self.IBO_Vertex_Indices = self.mesh.index_buffer
+        
+        self.vertex_count = self.mesh.vertex_count
+        self.indice_count = self.mesh.indice_count
+        
+    def set_parent_emitter(self, parent):
+        pass
+"""
+if    isinstance(texture, str): self.texture = Texture(texture)
+        elif  isinstance(texture, Texture): self.texture = texture
+        else: raise ValueError("Invalid Texture Type {},{}".format(type(texture), texture))
+"""
 """
 import cPickle
 from root import cVars

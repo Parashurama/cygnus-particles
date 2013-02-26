@@ -71,7 +71,7 @@ if __name__ == '__main__':
             position=Sphere((720.0, 450.0, 0.0), 0, 75),#(720.0, 450.0),
             #position=Square(450.0, 450.0, 650.0, 650.0, 0.0),
             #position=(650.0, 100.0, 0.0),
-            fire_rate=400000,
+            fire_rate=200000,
             particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
             particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
                                             velocity= (5.0, 5.0, 5.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#

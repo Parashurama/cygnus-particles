@@ -13,7 +13,16 @@ uniform float ParticleSystemcount;
 
 //uniform usamplerBuffer MeshTriangleIndice;
 uniform samplerBuffer MeshTriangleVertices;
-uniform int vertex_count;
+uniform int MeshVertexCount;
+
+//component size ex: struct( float, float, float): SIZE = 3
+uniform int MESH_DATA_STRUCT_SIZE;
+
+// Position Offset in Mesh data Struct
+//             |  Vertex Position  |    Vertex Normals  |  Vertex Texcoords  |
+// ex: struct ( float, float, float, float, float, float, float, float): Position offset = 0, 
+uniform int MESH_DATA_STRUCT_POSITION_OFFSET;// 
+
 uniform float ModelScale;
 
 uniform EMITTER_UNIFORMS
@@ -60,7 +69,7 @@ void main()
     //uvec3 indices = texelFetch(MeshTriangleIndice, int(MeshSize*rndhalffloats0.x));
     
     // if using texture buffer internal format R32F
-    int INDEX = int(vertex_count*rndhalffloats1.y)*3; //three component
+    int INDEX = MESH_DATA_STRUCT_POSITION_OFFSET + int(MeshVertexCount*rndhalffloats1.y)*MESH_DATA_STRUCT_SIZE; //three component
     vec3 EMIT_POSITION = EMITTER_PARTICLE_POSITION + vec3(texelFetch(MeshTriangleVertices, INDEX).x,
                                                           texelFetch(MeshTriangleVertices, INDEX+1).x,
                                                           texelFetch(MeshTriangleVertices, INDEX+2).x)*ModelScale;
@@ -75,5 +84,5 @@ void main()
     
     /*
     // if using texture buffer internal format RGBA32F
-    vec3 EMIT_POSITION = EMITTER_PARTICLE_POSITION + texelFetch(MeshTriangleVertices, int(vertex_count*rndhalffloats1.y)).xyz*ModelScale;
+    vec3 EMIT_POSITION = EMITTER_PARTICLE_POSITION + texelFetch(MeshTriangleVertices, int(MeshVertexCount*rndhalffloats1.y)).xyz*ModelScale;
     */

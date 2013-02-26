@@ -92,10 +92,6 @@ class MeshEmitter(Emitter):
         return BLOCK_EMITTER_UNIFORMS
 
 
-
-
-
-
 ########## MESH PARTICLE EMITTER ################
 def update_simple_particle_emitter(self, dt):
     self.update_emitter_uniforms_buffer()
@@ -128,7 +124,10 @@ def emit_new_particles(self, dt):
         self.UBO_EmitterUniforms.bind_asUniformBuffer(self.emitter_shader.UniformBlocks['EMITTER_UNIFORMS'])
         self.mesh.vertexes_buffer.bind_asTextureBuffer(1, 'R32F')
         
-        glUniform1i( Uniforms['vertex_count'], self.mesh.vertex_count)
+        glUniform1i( Uniforms['MESH_DATA_STRUCT_SIZE'], self.mesh.data_format['struct_size'])
+        glUniform1i( Uniforms['MESH_DATA_STRUCT_POSITION_OFFSET'], self.mesh.data_format['struct_position_offset'])
+        
+        glUniform1i( Uniforms['MeshVertexCount'], self.mesh.vertex_count)
         glUniform1f( Uniforms['ModelScale'], 2)
         
         glUniform1f( Uniforms['ParticleSystemcount'], particles_to_emit)

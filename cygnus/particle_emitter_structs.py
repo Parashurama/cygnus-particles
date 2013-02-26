@@ -5,7 +5,7 @@ from OpenGL.GL import *
 
 from glLibs.glObjects import BufferObject, VertexArrayObject, TransformFeedback, QueryObject
 from particle_emitter_utils import FillUniformBuffer, Unpack
-from particle_renderer import PointRenderer, PointSpriteRenderer, AnimatedPointSpriteRenderer#, MeshRenderer
+from particle_renderer import PointRenderer, PointSpriteRenderer, AnimatedPointSpriteRenderer, ParticleMeshRenderer
 from particle_emitter_vars import UPDATER_UNIFORMS_SRC_DATA,\
                                   DOMAIN_REF,\
                                   PARTICLE_DATA_SIZE
@@ -49,8 +49,8 @@ class BasicEmitter(object):
         if   isinstance(renderer, PointRenderer) : self.renderer_flag = 'PointRenderer'
         elif isinstance(renderer, PointSpriteRenderer) : self.renderer_flag = 'PointSpriteRenderer'
         elif isinstance(renderer, AnimatedPointSpriteRenderer) : self.renderer_flag = 'AnimatedPointSpriteRenderer'
-        #elif isinstance(renderer, MeshRenderer) : self.renderer_flag = 'MeshRenderer'
-        else: raise ValueError("Invalid Renderer Type {},{}".format(type(renderer), renderer))
+        elif isinstance(renderer, ParticleMeshRenderer) : self.renderer_flag = 'MeshRenderer'
+        else: raise ValueError("Invalid Renderer Type: '{}'".format(renderer.__class__.__name__))
         
         renderer.set_parent_emitter(self)
     

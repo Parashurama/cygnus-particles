@@ -1,4 +1,4 @@
 
 from root import Set_Camera, default_particle_system, GetObjectfromName, InitializeSystem as Init
-from particle_structs import Particle, Template, Mesh#, ParticleMesh
+from particle_structs import Particle, ParticleMesh, Template, Mesh
 from glLibs.textures import GLTexture2D as Texture2D, Animation as AnimatedTexture

@@ -112,7 +112,7 @@ UPDATER_UNIFORMS_LIST = [
 DEFAULT_MAX_PARTICLE_BUFFER_SIZE=1000000
 PARTICLE_DATA_SIZE = 32 #bytes
 
-EMITTER_TYPE_REF = { 'PointEmitter':0,'CircleEmitter':1,'SquareEmitter':2, 'TriangleEmitter':3,'LineEmitter':4    }
+EMITTER_TYPE_REF = { 'PointEmitter':0,'CircleEmitter':1,'DiscEmitter':2, 'LineEmitter':3,'TriangleEmitter':4, 'SquareEmitter':5, 'SphereEmitter':6   }
 
 MAIN_PARTICLE_EMITTER = 0.0
 PARTICLE_TYPE_1 = 10.0

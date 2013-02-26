@@ -53,3 +53,26 @@ class RandomTexture(object):
         
         glBindTexture(GL_TEXTURE_1D, 0)
 
+DATA_FORMAT_REFERENCE = {'v':'position', 'n':'normal', 't':'texcoord'}
+DATA_TYPE_REFERENCE = {'f':'float', 'i':'int'}
+
+def ParseBufferData_format(data_format):
+    struct_size = 0
+    DATA_INFO = {}
+    
+    for data_struct in data_format:
+        
+        data = DATA_FORMAT_REFERENCE[data_struct[0]]
+        size = int(data_struct[1])
+        data_type = DATA_TYPE_REFERENCE[data_struct[2]]
+        
+        DATA_INFO['struct_'+data+'_offset'] = struct_size
+        struct_size+= size
+    
+    DATA_INFO['struct_size'] = struct_size
+    
+    return DATA_INFO
+    
+    
+#class Transform(object):
+#    def __init__(self, size):

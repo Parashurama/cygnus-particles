@@ -25,8 +25,9 @@ def SetupOpenGLContext():
     gl.glHint(gl.GL_GENERATE_MIPMAP_HINT,gl.GL_FASTEST)
     gl.glShadeModel(gl.GL_SMOOTH)    
     
-    gl.glDisable(gl.GL_FOG) ; gl.glEnable(gl.GL_BLEND)
-    
+    gl.glDisable(gl.GL_FOG)
+    gl.glEnable(gl.GL_DEPTH_TEST)
+    gl.glEnable(gl.GL_BLEND)
     #gl.glEnable( gl.GL_POINT_SMOOTH )
 
     gl.glPolygonMode( gl.GL_FRONT, gl.GL_FILL )

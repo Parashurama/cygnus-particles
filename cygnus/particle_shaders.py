@@ -13,8 +13,7 @@ def SetupSimplePointRenderShader(ShaderObject, *args):
         UNIFORM_LIST= [ 'ModelViewProjection', 'ModelView','animation_fps',
                         'nFrames', 'ColorBlendTexture',
                         'ColorBlendLifeTime', 'COLOR_BLENDING',
-                        'GROWTH_FACTOR', 'PARTICLE_SIZE',
-                        'PARTICLE_TYPE_TO_RENDER',
+                        'GROWTH_FACTOR', 'PARTICLE_SIZE',#'PARTICLE_TYPE_TO_RENDER',
                         'TEXTURE_TYPE', 'PARTICLE_FEATHER_RADIUS',
                         'DEFAULT_PARTICLE_COLOR', 'SimpleTexture0',
                         'AnimatedTexture0']
@@ -43,8 +42,9 @@ def SetupEmitterShader(ShaderObject, *args):
     glUseProgram(0)
 
 def SetupMeshEmitterShader(ShaderObject, *args):
-    UNIFORM_LIST= [ 'seed','vertex_count','ModelScale',
+    UNIFORM_LIST= [ 'seed','MeshVertexCount','ModelScale',
                     'RandomTexture', 'MeshTriangleVertices',
+                    'MESH_DATA_STRUCT_SIZE', 'MESH_DATA_STRUCT_POSITION_OFFSET',
                     'ParticleSystemcount']
     
     ATTRIBUTE_LIST= ('Type',)
@@ -81,6 +81,34 @@ def SetupPerParticleEmitterShader(ShaderObject, *args):
 def SetupSimplePoolRenderShader(ShaderObject, *args):
     ShaderObject.SetupAttributesAndUniforms(['ModelViewProjection','ModelView'], ( 'Position',), True)
 
+
+def SetupMeshRenderShader(ShaderObject, *args):
+    UNIFORM_LIST = ['ModelView',
+                    'ModelViewProjection',
+                    'Diffuse_Texture0',
+                    'DEFAULT_PARTICLE_COLOR',
+                    'ColorBlendTexture',
+                    'ColorBlendLifeTime',
+                    'COLOR_BLENDING',
+                    'GROWTH_FACTOR',
+                    'PARTICLE_SIZE',
+                    'hasDiffuseTexture']
+    
+    ShaderObject.SetupAttributesAndUniforms(UNIFORM_LIST, ( 'Vertex_Position','Vertex_TexCoords', 'Instance_Position', 'Instance_Age'), False)
+    
+    glUniform1i(ShaderObject.Uniforms['Diffuse_Texture0'], 0)
+    glUseProgram(0)
+
+def SetupSingleMeshRenderShader(ShaderObject, *args):
+    UNIFORM_LIST = ['ModelView',
+                    'ModelViewProjection',
+                    'Diffuse_Texture0',
+                    'hasDiffuseTexture']
+    
+    ShaderObject.SetupAttributesAndUniforms(UNIFORM_LIST, ( 'Vertex_Position','Vertex_TexCoords'), False)
+    
+    glUniform1i(ShaderObject.Uniforms['Diffuse_Texture0'], 0)
+    glUseProgram(0)
 
 def BuildShaders():
     import os, cygnus
@@ -137,6 +165,22 @@ def BuildShaders():
     cVars.SimplePoolRenderShader.set_uniforms=dummy
     cVars.SimplePoolRenderShader.set_params=dummy
     cVars.SimplePoolRenderShader.InitShaderParams()
-
+    
+    
+    cVars.MeshRenderShader = BasicShaderObject('MeshRenderShader', directory=__dir__, vertex_file='render_mesh_object.vert', fragment_file='render_mesh_object.frag' )       
+    
+    cVars.MeshRenderShader.init_params = SetupMeshRenderShader
+    cVars.MeshRenderShader.set_uniforms=dummy
+    cVars.MeshRenderShader.set_params=dummy
+    cVars.MeshRenderShader.InitShaderParams()
+    
+    
+    cVars.SingleMeshRenderShader = BasicShaderObject('SingleMeshRenderShader', directory=__dir__, vertex_file='render_single_mesh_object.vert', fragment_file='render_single_mesh_object.frag' )       
+    
+    cVars.SingleMeshRenderShader.init_params = SetupSingleMeshRenderShader
+    cVars.SingleMeshRenderShader.set_uniforms=dummy
+    cVars.SingleMeshRenderShader.set_params=dummy
+    cVars.SingleMeshRenderShader.InitShaderParams()
+    
 def dummy(*args):pass
 
