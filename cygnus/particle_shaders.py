@@ -8,6 +8,15 @@ from glLibs.glShaderLibs import BasicShaderObject
 
 from particle_emitter_vars import EMITTER_UNIFORMS_LIST, UPDATER_UNIFORMS_LIST, EMITTER_SECONDARY_UNIFORMS_LIST, MESH_EMITTER_UNIFORMS_LIST
 
+FULL_LIGHTING_UNIFORMS = [ "light.ambient",
+                           "light.diffuse",
+                           "light.specular",
+                           "light.direction",
+                           "material.ambient",
+                           "material.diffuse",
+                           "material.specular",
+                           "material.shininess"]
+
 def SetupSimplePointRenderShader(ShaderObject, *args):
         
         UNIFORM_LIST= [ 'ModelViewProjection', 'ModelView','animation_fps',
@@ -99,6 +108,29 @@ def SetupMeshRenderShader(ShaderObject, *args):
     glUniform1i(ShaderObject.Uniforms['Diffuse_Texture0'], 0)
     glUseProgram(0)
 
+def SetupMeshRenderShaderLigthing(ShaderObject, *args):
+    UNIFORM_LIST = ['ModelView',
+                    'NormalMatrix',
+                    'ModelViewProjection',
+                    'Diffuse_Texture0',
+                    'Normal_Texture0',
+                    'DEFAULT_PARTICLE_COLOR',
+                    'ColorBlendTexture',
+                    'ColorBlendLifeTime',
+                    'COLOR_BLENDING',
+                    'GROWTH_FACTOR',
+                    'PARTICLE_SIZE',
+                    'hasDiffuseTexture',
+                    'hasNormalTexture',
+                    'NormalMultiplier']+FULL_LIGHTING_UNIFORMS
+    
+    ShaderObject.SetupAttributesAndUniforms(UNIFORM_LIST, ( 'Vertex_Position','Vertex_Normals', 'Vertex_TexCoords', 'Instance_Position', 'Instance_Age'), False)
+    
+    glUniform1i(ShaderObject.Uniforms['Diffuse_Texture0'], 0)
+    glUniform1i(ShaderObject.Uniforms['Normal_Texture0'], 1)
+    
+    glUseProgram(0)
+    
 def SetupSingleMeshRenderShader(ShaderObject, *args):
     UNIFORM_LIST = ['ModelView',
                     'ModelViewProjection',
@@ -181,6 +213,14 @@ def BuildShaders():
     cVars.SingleMeshRenderShader.set_uniforms=dummy
     cVars.SingleMeshRenderShader.set_params=dummy
     cVars.SingleMeshRenderShader.InitShaderParams()
+    
+    
+    cVars.MeshRenderShaderLighting = BasicShaderObject('MeshRenderShader', directory=__dir__, vertex_file='render_mesh_object_lighting.vert', fragment_file='render_mesh_object_lighting.frag' )       
+    
+    cVars.MeshRenderShaderLighting.init_params = SetupMeshRenderShaderLigthing
+    cVars.MeshRenderShaderLighting.set_uniforms=dummy
+    cVars.MeshRenderShaderLighting.set_params=dummy
+    cVars.MeshRenderShaderLighting.InitShaderParams()
     
 def dummy(*args):pass
 

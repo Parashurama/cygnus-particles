@@ -28,6 +28,7 @@ import numpy as np
 import time
 import weakref
 import random
+import ctypes
 
 class Emitter(BasicEmitter):
     def __init__(self, name, position, fire_rate, particle_template, particle_deviation={}, controllers=[], renderer=None, system=default_particle_system):
@@ -97,7 +98,7 @@ class Emitter(BasicEmitter):
             
             if self.renderer_flag == 'MeshRenderer':
                 #raise NotImplementedError('')
-                self.render = self.render_mesh_simple
+                self.render = self.render_mesh_material
             else:
                 self.render = self.render_simple
                 
@@ -217,20 +218,30 @@ class Emitter(BasicEmitter):
         
         self.particle_template.render()
     
-    #"""
+    """
     def render_mesh_simple(self):
         # render Mesh with ParticleMesh Template
         MESH_OBJECT = self.particle_renderer.mesh_object
         
         with self.particle_renderer:
-            glDrawElementsInstancedARB(GL_TRIANGLES, MESH_OBJECT.indice_count*3, GL_UNSIGNED_SHORT, MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0), self.particles_count )
+            glDrawElementsInstancedARB(GL_TRIANGLES, MESH_OBJECT.indice_count, GL_UNSIGNED_SHORT, MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0), self.particles_count )
+    """
+    def render_mesh_material(self):
+        # render Mesh with Material with ParticleMesh Template
+        Uniforms = self.particle_renderer.render_shader.Uniforms
+        # OPTIMIZE later by putting every submesh faces in the same indice buffer and draw with buffer offset
+        with self.particle_renderer:
+            for sub_mesh in self.particle_renderer.mesh_object.mesh_materials:
+                sub_mesh.setup(Uniforms)
+                glDrawElementsInstancedARB(sub_mesh.primitive_type, sub_mesh.indices_count, sub_mesh.indices_type, ctypes.c_void_p(sub_mesh.indices_offset), self.particles_count )
+                
     
     def render_single_mesh_simple(self):
         # render Mesh with ParticleMesh Template
         MESH_OBJECT = self.particle_renderer.mesh_object
         
         with self.particle_renderer:
-            glDrawElements(GL_TRIANGLES,  MESH_OBJECT.indice_count*3, GL_UNSIGNED_SHORT,  MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0))
+            glDrawElements(GL_TRIANGLES,  MESH_OBJECT.indice_count, GL_UNSIGNED_SHORT,  MESH_OBJECT.IBO_Vertex_Indices.C_Pointer(0))
     
 ########## BASIC PARTICLE EMITTER ################
 def update_simple_particle_emitter(self, dt):

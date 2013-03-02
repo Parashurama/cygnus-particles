@@ -347,13 +347,17 @@ INTERNAL_FORMATS = {'R8'      :GL_R8,
                     'R32F'   :GL_R32F,
                     'RG8'     :GL_RG8,
                     'RG32F'  :GL_RG32F,
+                    'RGB'    :GL_RGB8,
                     'RGB8'    :GL_RGB8,
                     'RGB32F' :GL_RGB32F_ARB,
+                    'RGBA'    : GL_RGBA8,
                     'RGBA8'   :GL_RGBA8,
                     'RGBA32F':GL_RGBA32F_ARB}
 
+from OpenGL.GL.EXT.texture_filter_anisotropic import GL_TEXTURE_MAX_ANISOTROPY_EXT
+
 class TextureObject(object):
-    def __init__(self, data, size, format='RGBA', internalformat='RGBA', mipmap=True, nearest=False, anisotropic=False, repeat_texture=True):
+    def __init__(self, data, size, format='RGBA', internalformat='RGBA8', mipmap=True, nearest=False, anisotropic=False, repeat_texture=True):
         assert format in internalformat
         
         self.id = glGenTextures(1)

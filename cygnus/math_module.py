@@ -1,4 +1,4 @@
-import numbers
+import numbers, math
 
 class Vec2(object):
     __slots__=('x','y')
@@ -77,8 +77,24 @@ class Vec2(object):
     def copy(self):
         return Vec2(self.x, self.y)
         
+    def magnitude(self):
+        return math.sqrt(dot2(self, self))
+        
+    def normalize(self):
+        inv_mag = self.magnitude()
+        self.x*=inv_mag
+        self.y*=inv_mag
+    
+    def normalized(self):
+        new_vec = self.copy()
+        new_vec.normalize()
+        return new_vec
+        
     def __iter__(self):
         return iter((self.x, self.y))
+        
+    def __repr__(self):
+        return 'Vec2({}, {})'.format(self.x, self.y)
 
 class Vec3(object):
     __slots__=('x','y','z')
@@ -164,9 +180,26 @@ class Vec3(object):
     def copy(self):
         return Vec3(self.x, self.y, self.z)
         
+    def magnitude(self):
+        return math.sqrt(dot3(self, self))
+        
+    def normalize(self):
+        inv_mag = self.magnitude()
+        self.x*=inv_mag
+        self.y*=inv_mag
+        self.z*=inv_mag
+    
+    def normalized(self):
+        new_vec = self.copy()
+        new_vec.normalize()
+        return new_vec
+        
     def __iter__(self):
         return iter((self.x, self.y, self.z))
-
+    
+    def __repr__(self):
+        return 'Vec3({}, {}, {})'.format(self.x, self.y, self.z)
+        
 def lerp(edge0, edge1):
     return edge0 + x * (edge1 -edge0)
 
@@ -178,6 +211,12 @@ def lerp3(vec0, vec1, value):
     return Vec3( vec0.x + value * (vec1.x -vec0.x),
                  vec0.y + value * (vec1.y -vec0.y),
                  vec0.z + value * (vec1.z -vec0.z) )
+
+def dot2(vec0, vec1):
+    return vec0.x*vec1.x + vec0.y*vec1.y
+
+def dot3(vec0, vec1):
+    return vec0.x*vec1.x + vec0.y*vec1.y + vec0.z*vec1.z
 
 def cross2(vec0, vec1):    
     return (vec0.x*vec1.y - vec0.y*vec1.x)

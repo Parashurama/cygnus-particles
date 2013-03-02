@@ -5,9 +5,11 @@ from OpenGL.GL import *
 from OpenGL.GL.ARB.instanced_arrays import glVertexAttribDivisorARB
 
 from __globals__ import cVars
-from particle_structs import ParticleMesh
 
-from glLibs.glObjects import BufferObject, VertexArrayObject
+from particle_structs  import Mesh
+from glLibs.gl_object_structs import glMaterial
+from glLibs.glObjects  import BufferObject, VertexArrayObject
+from mesh_loader       import LoadMaterialsFile
 
 class Renderer(object):
     color_blender = None
@@ -199,39 +201,67 @@ class AnimatedPointSpriteRenderer(PointRenderer):
         self.render_state.bind()
         
     __enter__ = SetState
-    
-#"""
+
+
+MESH_ATTRIBUTES_LIST_NO_TEXTURE_NO_LIGHTING = {'position':'Vertex_Position'}
+MESH_ATTRIBUTES_LIST_NO_TEXTURE_LIGHTING = {'position':'Vertex_Position', 'normal':'Vertex_Normals'}
+
+MESH_ATTRIBUTES_LIST_TEXTURED_NO_LIGHTING = {'position':'Vertex_Position', 'texcoord':'Vertex_TexCoords'}
+MESH_ATTRIBUTES_LIST_TEXTURED_LIGHTING = {'position':'Vertex_Position', 'texcoord':'Vertex_TexCoords', 'normal':'Vertex_Normals'}
+
+DEFAULT_MATERIAL = glMaterial(data={'name':'DEFAULT_MATERIAL'})
+
 class ParticleMeshRenderer(Renderer):
     flag='MESH_RENDERER'
     def __init__(self,  mesh_file,
-                        texture_file=None,
                         size=1,
-                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)):
+                        blending=None):
         
-        self.mesh_object = ParticleMesh(mesh_file)
-        self.texture = None
+        self.mesh_object = Mesh.fromMeshFile(mesh_file)
+        #print "mesh_hasTexturing",self.mesh_object.hasTexturing , self.mesh_object.mesh_materials.use_texturing
+        #print "mesh_hasLighting", self.mesh_object.hasLighting, self.mesh_object.mesh_materials.use_lighting
+        self.mesh_hasTexturing = (self.mesh_object.hasTexturing and self.mesh_object.mesh_materials.use_texturing)
+        self.mesh_hasLighting  = (self.mesh_object.hasLighting and self.mesh_object.mesh_materials.use_lighting)
+        
+        if self.mesh_hasLighting:
+            self.set_state_function = self.SetState_withMaterial
+            self.render_shader = cVars.MeshRenderShaderLighting
+        else:
+            self.set_state_function = self.SetState_noMaterial
+            self.render_shader = cVars.MeshRenderShader
+        print "render_shaerr", self.set_state_function
         self.point_size =  size
         self.blending = blending
-    
+        
     def BuildRenderState(self, *buffer_objects):
         
-        cVars.MeshRenderShader.Set()
+        if self.mesh_hasTexturing:
+            if self.mesh_hasLighting:
+                Mesh_AttributesList = MESH_ATTRIBUTES_LIST_TEXTURED_LIGHTING
+            else:
+                Mesh_AttributesList = MESH_ATTRIBUTES_LIST_TEXTURED_NO_LIGHTING
+        else:
+            if self.mesh_hasLighting:
+                Mesh_AttributesList = MESH_ATTRIBUTES_LIST_NO_TEXTURE_LIGHTING
+            else:
+                Mesh_AttributesList = MESH_ATTRIBUTES_LIST_NO_TEXTURE_NO_LIGHTING
+        
+        MESH_OBJ_DATA_FORMAT = self.mesh_object.data_format
         
         for i,buffer_object in enumerate(buffer_objects):
             setattr(self, 'VAO{}'.format(i), VertexArrayObject() ) 
             with getattr(self, 'VAO{}'.format(i)):
                 
-                Attributes=cVars.MeshRenderShader.Attributes
+                Attributes=self.render_shader.Attributes
                 
-                VBO_STRIDE=24
+                VBO_STRIDE=MESH_OBJ_DATA_FORMAT['struct_byte_size']
+                
                 self.mesh_object.VBO_Vertex_Data.bind()
                 
-                glEnableVertexAttribArray( Attributes['Vertex_Position'] )
-                #glEnableVertexAttribArray( Attributes['Vertex_TexCoords'] )
+                for attribute, shader_attribute_name in Mesh_AttributesList.iteritems():
+                    glEnableVertexAttribArray( Attributes[shader_attribute_name] )                    
+                    glVertexAttribPointer( Attributes[shader_attribute_name], MESH_OBJ_DATA_FORMAT['struct_{}_size'.format(attribute)], GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(MESH_OBJ_DATA_FORMAT['struct_{}_byte_offset'.format(attribute)]) )
                 
-                glVertexAttribPointer( Attributes['Vertex_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-                #glVertexAttribPointer( Attributes['Vertex_TexCoords'], 2, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-
                 # Instance Attributes # Buffer used with transform feedback
                 buffer_object.bind()
                 
@@ -242,17 +272,17 @@ class ParticleMeshRenderer(Renderer):
                 
                 glVertexAttribPointer( Attributes['Instance_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
                 glVertexAttribDivisorARB( Attributes['Instance_Position'], 1)
-
+                
                 glVertexAttribPointer( Attributes['Instance_Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
                 glVertexAttribDivisorARB( Attributes['Instance_Age'], 1)
                 
-                self.mesh_object.IBO_Vertex_Indices.bind()
+                #self.mesh_object.IBO_Vertex_Indices.bind()
                 
         self.render_state = self.VAO0
         
         glUseProgram(0)
     
-    def SetState(self):
+    def SetState_noMaterial(self):
 
         # render_shader
         cVars.MeshRenderShader.Set()
@@ -278,128 +308,75 @@ class ParticleMeshRenderer(Renderer):
         
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
-        
-        if self.mesh_object.texture is not None:
-            glBindTexture(GL_TEXTURE_2D, self.mesh_object.texture.id)
+        """
+        if self.mesh_hasTexturing:
+            glBindTexture(GL_TEXTURE_2D, self.mesh_material.diffuse_texture.id)
             glUniform1i( Uniforms['hasDiffuseTexture'], True)
         else:
             glUniform1i( Uniforms['hasDiffuseTexture'], False)
-        
+        """
         if self.blending is not None:
             glBlendFunc(*self.blending)
+            glDisable(GL_CULL_FACE)
         else:
             glDisable(GL_BLEND)
+            glEnable(GL_CULL_FACE)
         
         self.render_state.bind()
-        
-    __enter__ = SetState
-
-"""
-class ParticleMeshRenderer(Renderer):
-    flag='MESH_RENDERER'
-    def __init__(self,  mesh_file,
-                        texture_file=None,
-                        size=1,
-                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)):
-        
-        self.mesh_object = ParticleMesh(mesh_file)
-        self.texture = None
-        self.point_size =  size
-        self.blending = blending
     
-    def BuildRenderState(self, *buffer_objects):
+    def SetState_withMaterial(self):
         
-        cVars.SingleMeshRenderShader.Set()
-        
-        for i,buffer_object in enumerate(buffer_objects):
-            setattr(self, 'VAO{}'.format(i), VertexArrayObject() ) 
-            with getattr(self, 'VAO{}'.format(i)):
-                
-                Attributes=cVars.SingleMeshRenderShader.Attributes
-                
-                VBO_STRIDE=24
-                self.mesh_object.VBO_Vertex_Data.bind()
-                
-                glEnableVertexAttribArray( Attributes['Vertex_Position'] )
-                #glEnableVertexAttribArray( Attributes['Vertex_TexCoords'] )
-                
-                glVertexAttribPointer( Attributes['Vertex_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-                #glVertexAttribPointer( Attributes['Vertex_TexCoords'], 2, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-                
-                self.mesh_object.IBO_Vertex_Indices.bind()
-                
-        self.render_state = self.VAO0
-        
-        glUseProgram(0)
-    
-    def SetState(self):
-
         # render_shader
-        cVars.SingleMeshRenderShader.Set()
-        Uniforms = cVars.SingleMeshRenderShader.Uniforms
+        cVars.MeshRenderShaderLighting.Set()
+        Uniforms = cVars.MeshRenderShaderLighting.Uniforms
         
         emitter = self.parent_emitter
         
+        if self.color_blender is not None:
+            glUniform1f( Uniforms['ColorBlendLifeTime'], self.color_blender.end_time -self.color_blender.start_time)           
+            glUniform1i( Uniforms['COLOR_BLENDING'], 1)
+            glBindTexture(GL_TEXTURE_1D, self.color_blender.ColorBlendLookup.id)
+            
+        else:
+            glUniform1f( Uniforms['ColorBlendLifeTime'], 0.0)
+            glUniform1i( Uniforms['COLOR_BLENDING'], 0)
+        
+        if self.growth_controller is not None:
+              glUniform1f( Uniforms['GROWTH_FACTOR'], self.growth_controller.growth)
+        else: glUniform1f( Uniforms['GROWTH_FACTOR'], 0.0)
+        
+        glUniform1f( Uniforms['PARTICLE_SIZE'], 0.1)#(emitter.particle_template.point_size or self.point_size)/2)
+        glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *emitter.particle_template.color)
+        
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
+        glUniformMatrix3fv(Uniforms['NormalMatrix'], 1, False, cVars.Current_Camera.normal_matrix)
         
-        if self.mesh_object.texture is not None:
-            glBindTexture(GL_TEXTURE_2D, self.mesh_object.texture.id)
-            glUniform1i( Uniforms['hasDiffuseTexture'], True)
+        emitter.particle_system.default_env.SetupLightProperties(Uniforms)
+        
+        if self.blending is not None:
+            glBlendFunc(*self.blending)
+            glDisable(GL_CULL_FACE)
         else:
-            glUniform1i( Uniforms['hasDiffuseTexture'], False)
-        
-        glBlendFunc(*self.blending)
+            glDisable(GL_BLEND)
+            glEnable(GL_CULL_FACE)
         
         self.render_state.bind()
+        # self.mesh_material.Setup(Uniforms)
+        
+    def SetState(self):
+        self.set_state_function()
         
     __enter__ = SetState
-"""
-"""
+    
+    def UnsetState(self, *args):
+        if self.blending is None:
+            glEnable(GL_BLEND)
+            glDisable(GL_CULL_FACE)
+            
+        glUseProgram(0)        
+        glBindVertexArray(0)
+        self.SwitchState()
+        
+    __exit__ = UnsetState
 
-def simple_render_mesh(self):
-    VBO_STRIDE=32
-    glUseProgram(self.render_mesh_shader.program)
-    
-    
-    glUniformMatrix4fv(self.render_mesh_shader.Uniforms['ModelView'], 1, False, cVars.ModelViewProjectionMatrix)
-    
-    UpdateMeshRenderState(self, self.render_mesh_shader.Uniforms)
-    Attributes = cVars.render_mesh_objects.Attributes
-    MESH_OBJECT = self.particle_renderer.mesh_object
-    
-    glBindTexture(GL_TEXTURE_2D, MESH_OBJECT.texture.id)
-    
-    glEnableVertexAttribArray( Attributes['Vertex_Position'] )
-    glEnableVertexAttribArray( Attributes['Vertex_TexCoords'] )
-    glEnableVertexAttribArray( Attributes['Instance_Position'] )
-    glEnableVertexAttribArray( Attributes['Instance_Age'] )
-    
-    MESH_OBJECT.Vertex_Position_VBO.bind()
-    glVertexAttribPointer( Attributes['Vertex_Position'], 3, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-    
-    MESH_OBJECT.Vertex_TexCoords_VBO.bind()
-    glVertexAttribPointer( Attributes['Vertex_TexCoords'], 2, GL_FLOAT,False, 0, ctypes.c_void_p(0) )
-
-    self.VBO_Geometry.bind()
-    glVertexAttribPointer( Attributes['Instance_Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-    glVertexAttribDivisorARB( Attributes['Instance_Position'], 1)
-
-    glVertexAttribPointer( Attributes['Instance_Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
-    glVertexAttribDivisorARB( Attributes['Instance_Age'], 1)
-    
-    glDrawArraysInstancedARB( GL_TRIANGLES, 0 , MESH_OBJECT.Vertex_Count, self.VBO_Geometry.GetPrimitiveCount() ) 
-    
-    
-    glVertexAttribDivisorARB( Attributes['Instance_Position'], 0)
-    glVertexAttribDivisorARB( Attributes['Instance_Age'], 0)
-    
-    glDisableVertexAttribArray( Attributes['Vertex_Position'] )
-    glDisableVertexAttribArray( Attributes['Vertex_TexCoords'] )
-    glDisableVertexAttribArray( Attributes['Instance_Position'] )
-    glDisableVertexAttribArray( Attributes['Instance_Age'] )
-    
-    glUseProgram(0)
-
-
-"""

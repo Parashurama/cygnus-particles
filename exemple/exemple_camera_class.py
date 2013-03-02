@@ -40,6 +40,9 @@ def Mat4_PerspectiveMatrix(fovy, aspect, zNear, zFar):
                      (             0.0,       0.0, -(zFar + zNear) / deltaZ, -1.0),
                      (0.0,         0.0, -(2.0 * zFar * zNear) / deltaZ, 0.0)], dtype='float32')
 
+def Mat4_to_Mat3(matrix):
+    return np.ascontiguousarray(matrix[:3,:3])
+
 class CameraObject(object):
     def __init__(self, translation=(0,0,0), rotation=(0,0,0)):
         self.camera_translation = Vec3(*translation)
@@ -99,9 +102,11 @@ class CameraObject(object):
     #    self.FrustumCenter = camera_position+self.ViewVector*((far-near)*0.5)
     
     def UpdateFrustum(self):
+        print self.camera_translation, self.camera_rotation
         translation_matrix = Mat4_TranslationMatrix(*self.camera_translation)
         rotation_matrix    = Mat4_RotationMatrix(*self.camera_rotation)
         
+        self.normal_matrix = Mat4_to_Mat3(rotation_matrix)
         self.view_matrix = np.dot(Mat4_TranslationMatrix(-700.0, -450.0, 0.0) , np.dot(rotation_matrix, translation_matrix))
         #self.view_matrix = Mat4_TranslationMatrix(*self.camera_translation)*Mat4_RotationMatrix(*self.camera_rotation)*Mat4_TranslationMatrix(-700.0, -450.0, 0.0)
         

@@ -55,10 +55,13 @@ class RandomTexture(object):
 
 DATA_FORMAT_REFERENCE = {'v':'position', 'n':'normal', 't':'texcoord'}
 DATA_TYPE_REFERENCE = {'f':'float', 'i':'int'}
+DATA_TYPE_SIZE = {'f':4, 'i':4}
 
 def ParseBufferData_format(data_format):
     struct_size = 0
+    struct_byte_size = 0
     DATA_INFO = {}
+    DATA_INFO['struct_info']=[]
     
     for data_struct in data_format:
         
@@ -66,10 +69,18 @@ def ParseBufferData_format(data_format):
         size = int(data_struct[1])
         data_type = DATA_TYPE_REFERENCE[data_struct[2]]
         
-        DATA_INFO['struct_'+data+'_offset'] = struct_size
+        DATA_INFO['struct_{}_byte_offset'.format(data)] = struct_byte_size
+        DATA_INFO['struct_{}_offset'.format(data)] = struct_size
+        DATA_INFO['struct_{}_size'.format(data)] = size
+        DATA_INFO['struct_info'].append(data)
+        
         struct_size+= size
-    
+        struct_byte_size+= size*DATA_TYPE_SIZE[data_struct[2]]
+        
     DATA_INFO['struct_size'] = struct_size
+    DATA_INFO['struct_data'] = data_format
+    DATA_INFO['struct_info'] = tuple(DATA_INFO['struct_info'])
+    DATA_INFO['struct_byte_size'] = struct_byte_size
     
     return DATA_INFO
     

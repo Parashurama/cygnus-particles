@@ -12,7 +12,7 @@ from exemple_camera_class     import CameraObject
 import cygnus
 import OpenGL.GL as gl
 
-from cygnus import Particle, ParticleMesh, Mesh, Template, Texture2D, AnimatedTexture
+from cygnus import Particle, Mesh, Template, Texture2D, AnimatedTexture
 from cygnus.particle_domain     import Triangle, Square, Line, Disc, Sphere
 from cygnus.particle_controller import LifeTime, Collector, Gravity, ColorBlender, Growth, Magnet, Bounce
 from cygnus.particle_renderer   import PointRenderer, PointSpriteRenderer, AnimatedPointSpriteRenderer, ParticleMeshRenderer
@@ -21,7 +21,7 @@ from cygnus.particle_mesh_emitter import MeshEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False)   
+    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False, resizable=True)   
     cygnus.Init()
     
     CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     
     @window.event
     def on_mouse_scroll(self, x, y, scroll_y):
-        CAMERA_0.ZoomCamera(dz=-scroll_y)
+        CAMERA_0.ZoomCamera(dz=-scroll_y*0.2)
         
     @window.event
     def on_key_press(symbol, modifiers):
@@ -79,15 +79,16 @@ if __name__ == '__main__':
                                 ]
     Emitter(name='Test1',
             position=(720.0, 450.0),
-            fire_rate=50,
+            fire_rate=0.1,
             particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0)),#, color = (1.0,0.4,1.0,0.7) ),
             particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
-                                            velocity= (80.0, 80.0, 80.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
+                                            velocity= (0.0, 0.0, 0.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
                                             age = 1.0 ),
-            controllers = DOMAIN_CONTROLLERS+[ LifeTime(20.0) ],
+            controllers = [ LifeTime(10.0) ],#+DOMAIN_CONTROLLERS,
             
             
-            renderer = ParticleMeshRenderer('ressources/meshes/bunny2', blending=None)
+            #renderer = ParticleMeshRenderer('ressources/meshes/bunny2', blending=None)
+            renderer = ParticleMeshRenderer('ressources/meshes/raptor/raptor.obj', blending=None)
             )
     
     

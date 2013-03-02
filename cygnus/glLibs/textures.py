@@ -16,7 +16,7 @@ class GLTexture2D(TextureObject):
         self.size=( float(self.width),float(self.height) )
         self.texcoords=(0.0,0.0,1.0,1.0)
         
-        TextureObject.__init__(self, decoded_image.data, size=(self.width,self.height), format=decoded_image.format, internalformat='RGBA', mipmap=mipmap, nearest=nearest, anisotropic=anisotropic, repeat_texture=repeat_texture)
+        TextureObject.__init__(self, decoded_image.data, size=(self.width,self.height), format=decoded_image.format, internalformat='RGBA8', mipmap=mipmap, nearest=nearest, anisotropic=anisotropic, repeat_texture=repeat_texture)
         
         
 

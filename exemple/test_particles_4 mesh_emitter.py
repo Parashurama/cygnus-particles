@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #DOMAIN_CONTROLLERS=[]
     MeshEmitter(name='Test1',
                 position=(720.0, 450.0),
-                mesh = Mesh.fromMeshFile('ressources/meshes/bunny'),
+                mesh = Mesh.fromMeshFile('ressources/meshes/bunny2'),
                 fire_rate=100000,
                 particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
                 particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),

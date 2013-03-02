@@ -122,7 +122,7 @@ def emit_new_particles(self, dt):
         self.emitter_shader.Set()
         
         self.UBO_EmitterUniforms.bind_asUniformBuffer(self.emitter_shader.UniformBlocks['EMITTER_UNIFORMS'])
-        self.mesh.vertexes_buffer.bind_asTextureBuffer(1, 'R32F')
+        self.mesh.VBO_Vertex_Data.bind_asTextureBuffer(1, 'R32F')
         
         glUniform1i( Uniforms['MESH_DATA_STRUCT_SIZE'], self.mesh.data_format['struct_size'])
         glUniform1i( Uniforms['MESH_DATA_STRUCT_POSITION_OFFSET'], self.mesh.data_format['struct_position_offset'])

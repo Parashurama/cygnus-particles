@@ -3,11 +3,13 @@
 from OpenGL.GL import *
 from OpenGL.GL.NV.transform_feedback import GL_RASTERIZER_DISCARD_NV
 
+from particle_environnement import Environnement
 class ParticleSystem(object):
     
     def __init__(self, global_controllers=()):
         self.global_controllers = tuple(global_controllers)
         self.groups = []
+        self.default_env = Environnement()
     
     def add_global_controller(self, *controllers):
         """Add a global controller applied to all groups on update"""

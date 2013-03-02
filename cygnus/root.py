@@ -3,8 +3,10 @@
 from __globals__ import cVars
 
 from particle_system import ParticleSystem
+from glLibs.media_manager import ImagesManager
 
 default_particle_system = ParticleSystem()
+cVars.default_image_manager = ImagesManager()
 
 def InitializeSystem():
     import particle_shaders
