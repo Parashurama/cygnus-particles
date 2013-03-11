@@ -36,7 +36,7 @@ class Mesh(object):
     @classmethod
     def fromMeshFile(cls, filename):
         mesh = cls.__new__(cls)
-        faces_material, material_reference, vertex_data, data_format = LoadMesh(filename)
+        faces_data, faces_materials, material_reference, vertex_data, data_format = LoadMesh(filename)
         
         mesh.data_format = ParseBufferData_format(data_format)
         
@@ -53,74 +53,12 @@ class Mesh(object):
         else:
             mesh.hasLighting = True
         
-        mesh.mesh_materials = MaterialManager(faces_material, material_reference)
+        mesh.mesh_materials = MaterialManager(faces_materials, material_reference)
         
         mesh.vertex_count = len(vertex_data)
-        mesh.VBO_Vertex_Data = BufferObject(GL_ARRAY_BUFFER, np.asarray(vertex_data, dtype='float32'), GL_STATIC_DRAW)
+        mesh.indice_count = len(faces_data)
+        
+        mesh.IBO_Vertex_Indices = BufferObject(GL_ELEMENT_ARRAY_BUFFER, faces_data, GL_STATIC_DRAW)
+        mesh.VBO_Vertex_Data = BufferObject(GL_ARRAY_BUFFER, vertex_data, GL_STATIC_DRAW)
         
         return mesh
-    """
-        #self.indice_count = len(INDICES)
-        #INDICES = np.asarray(indices, dtype='uint16').ravel()
-        
-        #self.IBO_Vertex_Indices = BufferObject(GL_ELEMENT_ARRAY_BUFFER, INDICES, GL_STATIC_DRAW)
-    
-    def create_from_buffer(self, indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format):
-        self.IBO_Vertex_Indices = indices_buffer
-        self.VBO_Vertex_Data = vertexes_buffer
-        self.vertex_count = vertex_count
-    
-    
-        return cls.fromData()
-    
-    @classmethod
-    def fromData(cls, indices, vertexes, data_format):
-        mesh = cls.__new__(cls)
-        mesh.create(indices, vertexes, data_format)
-        
-        return mesh
-        
-    @classmethod
-    def fromBuffers(cls, indices_buffer, vertexes_buffer, vertex_count, indice_count, data_format):
-        mesh = cls.__new__(cls)
-        mesh.create_from_buffer(indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format)
-        return mesh
-    """
-"""
-class Mesh(object):
-    
-    def create(self, indices, vertexes, data_format):
-        
-        self.data_format = ParseBufferData_format(data_format)
-        assert 'position' in self.data_format['struct_info'], 'invalid buffer data format'
-        
-        INDICES = np.asarray(indices, dtype='uint16').ravel()
-        VERTEXES = np.asarray(vertexes, dtype='float32')
-        self.vertex_count = len(vertexes)
-        self.indice_count = len(INDICES)
-        
-        self.IBO_Vertex_Indices = BufferObject(GL_ELEMENT_ARRAY_BUFFER, INDICES, GL_STATIC_DRAW)
-        self.VBO_Vertex_Data = BufferObject(GL_ARRAY_BUFFER, VERTEXES, GL_STATIC_DRAW)
-    
-    def create_from_buffer(self, indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format):
-        self.IBO_Vertex_Indices = indices_buffer
-        self.VBO_Vertex_Data = vertexes_buffer
-        self.vertex_count = vertex_count
-        
-    @classmethod
-    def fromMeshFile(cls, filename):
-        return cls.fromData(*LoadMesh(filename))
-    
-    @classmethod
-    def fromData(cls, indices, vertexes, data_format):
-        mesh = cls.__new__(cls)
-        mesh.create(indices, vertexes, data_format)
-        
-        return mesh
-        
-    @classmethod
-    def fromBuffers(cls, indices_buffer, vertexes_buffer, vertex_count, indice_count, data_format):
-        mesh = cls.__new__(cls)
-        mesh.create_from_buffer(indices_buffer,vertexes_buffer, vertex_count, indice_count, data_format)
-        return mesh
-"""

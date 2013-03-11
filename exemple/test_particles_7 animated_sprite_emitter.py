@@ -20,11 +20,11 @@ from cygnus.particle_emitter    import Emitter, PerParticleEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False)   
+    window = PygletWindow(1440,800, caption='TestParticles7 AnimatedSpriteEmitter', vsync=False)   
     cygnus.Init()
     
-    CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
-                            rotation= (0.0,0.0,0.0))
+    CAMERA_0 = CameraObject(translation = (0.0, 0.0, -1472.0),
+                            rotation    = (-119.0, -105.0, -30.0))
     cygnus.Set_Camera(CAMERA_0)
     
     GetTick = Timer()
@@ -66,29 +66,27 @@ if __name__ == '__main__':
             if symbol == key.F4: raise SystemExit
             if symbol == key.ENTER: window.ToggleFullscreen()
     
-    #DOMAIN_CONTROLLERS=[]
+    DOMAIN_CONTROLLERS=[ColorBlender([  (0,   (0.0, 0.0, 0.2, 0.1)), 
+                                        (1.0, (0.0, 0.0, 0.5, 0.7)), 
+                                        (3.0, (0.0, 0.5, 1.0, 1.0)), 
+                                        (5.0, (1.0, 1.0, 0.0, 1.0)),
+                                        (8.0, (0.0, 0.5, 0.0, 0.7)),
+                                        (10.0,(0.5, 0.0, 0.5, 0.0))]) ]
     Emitter(name='Test1',
-            position=Sphere((720.0, 450.0, 0.0), 0, 75),#(720.0, 450.0),
-            #position=Square(450.0, 450.0, 650.0, 650.0, 0.0),
-            #position=(650.0, 100.0, 0.0),
-            fire_rate=200000,
-            particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
+            position=Triangle((650.0, 100.0, 0.0), (250.0, 100.0, 0.0), (150.0, 400.0, 0.0)),
+            fire_rate=200,
+            particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0) ),#, color = (1.0,0.4,1.0,0.7)
             particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
-                                            velocity= (5.0, 5.0, 5.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
-                                            age = 1.0 ),
-            controllers = [ LifeTime(1.0) ],
+                                            velocity= (250.0, 250.0, 250.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
+                                            age = 0.0 ),
+            controllers = DOMAIN_CONTROLLERS+[ LifeTime(10.0), Growth(10.0) ],
             
-            #renderer = AnimatedPointSpriteRenderer( AnimatedTexture('Media/Images/_Dark_1.png', 5, 5),
-            #                                        point_size=64.1,
-            #                                        feather = 0.0,
-            #                                        blending=(gl.GL_SRC_ALPHA, gl.GL_ONE) )
-            #renderer = PointSpriteRenderer( Texture('Media/Images/bubble.png'), point_size=32.0, feather = 0.0,
-            #                                blending=(gl.GL_SRC_ALPHA, gl.GL_ONE)),
-            renderer = PointRenderer( point_size=4.0, feather = 2.0,
-                                   blending=(gl.GL_SRC_ALPHA, gl.GL_ONE))
+            renderer = AnimatedPointSpriteRenderer( AnimatedTexture('ressources/textures/Dark_1.png', 5, 5), point_size=64.0, feather = 0.0,
+                                                    blending=(gl.GL_SRC_ALPHA, gl.GL_ONE),
+                                                    distance_attenuation=True),
             
-            #renderer = MeshRenderer( ParticleMesh('Media/Models/book_open', 'Media/Models/book.png') )
             )
     
     
     pyglet.app.run()
+

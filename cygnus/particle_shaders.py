@@ -25,7 +25,7 @@ def SetupSimplePointRenderShader(ShaderObject, *args):
                         'GROWTH_FACTOR', 'PARTICLE_SIZE',#'PARTICLE_TYPE_TO_RENDER',
                         'TEXTURE_TYPE', 'PARTICLE_FEATHER_RADIUS',
                         'DEFAULT_PARTICLE_COLOR', 'SimpleTexture0',
-                        'AnimatedTexture0']
+                        'AnimatedTexture0', 'hasDistanceAttenuation']
         
         ATTRIBUTE_LIST= ( 'Position','Age')#'Type',
         
@@ -206,14 +206,14 @@ def BuildShaders():
     cVars.MeshRenderShader.set_params=dummy
     cVars.MeshRenderShader.InitShaderParams()
     
-    
+    """
     cVars.SingleMeshRenderShader = BasicShaderObject('SingleMeshRenderShader', directory=__dir__, vertex_file='render_single_mesh_object.vert', fragment_file='render_single_mesh_object.frag' )       
     
     cVars.SingleMeshRenderShader.init_params = SetupSingleMeshRenderShader
     cVars.SingleMeshRenderShader.set_uniforms=dummy
     cVars.SingleMeshRenderShader.set_params=dummy
     cVars.SingleMeshRenderShader.InitShaderParams()
-    
+    """
     
     cVars.MeshRenderShaderLighting = BasicShaderObject('MeshRenderShader', directory=__dir__, vertex_file='render_mesh_object_lighting.vert', fragment_file='render_mesh_object_lighting.frag' )       
     

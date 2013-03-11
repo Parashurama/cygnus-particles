@@ -2,7 +2,6 @@
 # *-* coding: UTF-8 *-*
 
 from OpenGL.GL import *
-#from OpenGL.GL.NV.transform_feedback import *
 from OpenGL.GL.ARB.instanced_arrays import glVertexAttribDivisorARB
 from OpenGL.GL.ARB.draw_instanced import glInitDrawInstancedARB,glDrawArraysInstancedARB,glDrawElementsInstancedARB
 
@@ -229,12 +228,11 @@ class Emitter(BasicEmitter):
     def render_mesh_material(self):
         # render Mesh with Material with ParticleMesh Template
         Uniforms = self.particle_renderer.render_shader.Uniforms
-        # OPTIMIZE later by putting every submesh faces in the same indice buffer and draw with buffer offset
+        
         with self.particle_renderer:
             for sub_mesh in self.particle_renderer.mesh_object.mesh_materials:
                 sub_mesh.setup(Uniforms)
-                glDrawElementsInstancedARB(sub_mesh.primitive_type, sub_mesh.indices_count, sub_mesh.indices_type, ctypes.c_void_p(sub_mesh.indices_offset), self.particles_count )
-                
+                glDrawElementsInstancedARB(sub_mesh.primitive_type, sub_mesh.indices_count, sub_mesh.indices_type, ctypes.c_void_p(sub_mesh.indices_byte_offset), self.particles_count )
     
     def render_single_mesh_simple(self):
         # render Mesh with ParticleMesh Template
@@ -263,14 +261,12 @@ def emit_new_particles(self, dt):
     if self.particles_burst is not None:
         particles_to_emit = self.particles_burst[0]
         self.particles_burst = None
-        print "Emit", particles_to_emit
         
     else:
         self.real_emitted_particles +=particles_to_emit
     
     
     if particles_to_emit:
-        
         self.emitter_shader.Set()
         
         self.UBO_EmitterUniforms.bind_asUniformBuffer(self.emitter_shader.UniformBlocks['EMITTER_UNIFORMS'])

@@ -20,10 +20,10 @@ from cygnus.particle_emitter    import Emitter, PerParticleEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False)   
+    window = PygletWindow(1440,800, caption='TestParticles2 MulticolorMissiles', vsync=False)   
     cygnus.Init()
     
-    CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
+    CAMERA_0 = CameraObject(translation = (0.0, 0.0, -1472.0),
                             rotation= (0.0,0.0,0.0))
     cygnus.Set_Camera(CAMERA_0)
     
@@ -119,16 +119,8 @@ if __name__ == '__main__':
                                             age = 1.0 ),
             controllers = DOMAIN_CONTROLLERS+[ LifeTime(15.0) ],
             
-            #renderer = AnimatedPointSpriteRenderer( AnimatedTexture('Media/Images/_Dark_1.png', 5, 5),
-            #                                        point_size=64.1,
-            #                                        feather = 0.0,
-            #                                        blending=(gl.GL_SRC_ALPHA, gl.GL_ONE) )
-            #renderer = PointSpriteRenderer( Texture('Media/Images/bubble.png'), point_size=32.0, feather = 0.0,
-            #                                blending=(gl.GL_SRC_ALPHA, gl.GL_ONE)),
-            renderer = PointRenderer( point_size=16.0, feather = 2.0,
+            renderer = PointRenderer( point_size=4.0, feather = 2.0,
                                    blending=(gl.GL_SRC_ALPHA, gl.GL_ONE))
-            
-            #renderer = MeshRenderer( ParticleMesh('Media/Models/book_open', 'Media/Models/book.png') )
             )
     
     

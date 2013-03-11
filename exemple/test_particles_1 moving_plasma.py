@@ -20,11 +20,11 @@ from cygnus.particle_emitter    import Emitter, PerParticleEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False)   
+    window = PygletWindow(1440,800, caption='TestParticles1 MovingPlasma', vsync=False)   
     cygnus.Init()
     
-    CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
-                            rotation= (0.0,0.0,0.0))
+    CAMERA_0 = CameraObject(translation = (0.0, 0.0, -1344.0),
+                            rotation= (212.0, -217.0, 0.0))
     cygnus.Set_Camera(CAMERA_0)
     
     GetTick = Timer()
@@ -65,34 +65,7 @@ if __name__ == '__main__':
         if modifiers & key.MOD_ALT: 
             if symbol == key.F4: raise SystemExit
             if symbol == key.ENTER: window.ToggleFullscreen()
-    
-    
-    trail = PerParticleEmitter( name='Trail0',
-                                fire_rate=500,
-                                velocity = (0.0,0.0,0.0),
-                                color = (0.0,0.8,1.0,0.7),
-                                particle_template=Particle( position = (0.0, 0.0, 0.0),
-                                                            velocity = (0.0, 0.0, 0.0),
-                                                            #color = (1.0,0.4,1.0,0.7)
-                                                          ),
-                                particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
-                                                                velocity= (5.0,5.0, 5.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
-                                                                age = 0.5 ),
-                                controllers = [ LifeTime(20.0),
-                                                #Growth(1.0),
-                                                ColorBlender([  (0,   (0.0, 0.0, 0.2, 0.1)), 
-                                                                (1.0, (0.0, 0.0, 0.5, 0.7)), 
-                                                                (3.0, (0.0, 0.5, 1.0, 1.0)), 
-                                                                (5.0, (1.0, 1.0, 0.0, 1.0)), 
-                                                                (10.7, (0.9, 0.2, 0.0, 1.0)), 
-                                                                (15.0, (0.6, 0.1, 0.05, 0.8)), 
-                                                                (19.0, (0.8, 0.8, 0.8, 0.5)),
-                                                                (20.0, (0.8, 0.8, 0.8, 0.3)) ])
-                                                ],
-                                renderer = PointRenderer( point_size=8.0, feather = 8.0,
-                                                        blending=(gl.GL_SRC_ALPHA, gl.GL_ONE)),
-                                )
-    
+            
     DOMAIN_CONTROLLERS = [Gravity(0.0, 95.81, 0.0),
                                     Magnet( origin=(750, 550, 0),
                                             charge=0.05,
@@ -108,28 +81,20 @@ if __name__ == '__main__':
                                             charge=0.01,
                                             cutoff=150,
                                             epsilon=1.0)]
-    
+    #DOMAIN_CONTROLLERS=[]
     Emitter(name='Test1',
             #position=Disc((720, 150, 0.0), 45, 75),#(720.0, 450.0),
             position=(650.0, 100.0, 0.0),
-            fire_rate=5,
-            particle_template=trail,
+            fire_rate=20000,
+            particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
             
             particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
                                             velocity= (150.0, 150.0, 150.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
                                             age = 1.0 ),
             controllers = DOMAIN_CONTROLLERS+[ LifeTime(15.0) ],
             
-            #renderer = AnimatedPointSpriteRenderer( AnimatedTexture('Media/Images/_Dark_1.png', 5, 5),
-            #                                        point_size=64.1,
-            #                                        feather = 0.0,
-            #                                        blending=(gl.GL_SRC_ALPHA, gl.GL_ONE) )
-            #renderer = PointSpriteRenderer( Texture('Media/Images/bubble.png'), point_size=32.0, feather = 0.0,
-            #                                blending=(gl.GL_SRC_ALPHA, gl.GL_ONE)),
-            renderer = PointRenderer( point_size=16.0, feather = 2.0,
+            renderer = PointRenderer( point_size=4.0, feather = 2.0,
                                    blending=(gl.GL_SRC_ALPHA, gl.GL_ONE))
-            
-            #renderer = MeshRenderer( ParticleMesh('Media/Models/book_open', 'Media/Models/book.png') )
             )
     
     

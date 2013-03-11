@@ -1,5 +1,16 @@
+#! /usr/bin/env python
+# *-* coding: UTF-8 *-*
+
 import numpy as np
 import os
+
+
+class ModelLoadingError(Exception):
+    pass
+
+class MaterialFileLoadingError(Exception):
+    pass
+
 ############### LOAD MESH UTILS #####################
 
 MATERIAL_COMPONENTS = { 'Ka':'ambient',
@@ -8,6 +19,7 @@ MATERIAL_COMPONENTS = { 'Ka':'ambient',
                         'd':'tranparency',
                         'Tr':'tranparency',
                         'Ns':'shininess',
+                        'Ni':'refraction_indice',
                         'illum':'illumination_mode',
                         'map_Ka':'ambiant_texture',
                         'map_Kd':'diffuse_texture',
@@ -16,22 +28,32 @@ MATERIAL_COMPONENTS = { 'Ka':'ambient',
                         'map_bump':'bump_texture',
                         'face_culling':'face_culling'}
 
-def LoadMaterialsFile(filename, folder, use_default_material=True):
+def LoadMaterialsFile(filename, folder, use_default_material=True, alternate_file_name=None):
     contents = {}
     mtl = None
     
-    if not filename.endswith('.mtl'):
-        mtlfilename = os.path.normpath(os.path.join(folder, filename+'.mtl'))
+    if alternate_file_name is not None:
+        
+        alternate_file_name = os.path.join(filename,alternate_file_name)
+        
+        if not os.path.exists(alternate_file_name):
+            alternate_file_name = filename+'.mtl'
+        
+        mtlfilename=alternate_file_name
     else:
-        mtlfilename = os.path.normpath(os.path.join(folder, filename))
+        if not filename.endswith('.mtl'):
+            mtlfilename = os.path.normpath(os.path.join(folder, filename+'.mtl'))
+        else:
+            mtlfilename = os.path.normpath(os.path.join(folder, filename))
         
     try:
         material_file = open(mtlfilename, "r")
     except IOError:
         if use_default_material:
-            return {None:None} # If Material not Found Use Default Material
+            # If Material not Found Use Default Material
+            return {'DEFAULT_MATERIAL':{'name':'DEFAULT_MATERIAL'}}
         else:
-            raise IOError('Invalid Material File {}'.format(mtlfilename))
+            raise MaterialFileLoadingError("Invalid Material Filename '{}' in Model File".format(mtlfilename))
     
     for line in open(mtlfilename, "r"):
         if line.startswith('#'): continue
@@ -48,7 +70,7 @@ def LoadMaterialsFile(filename, folder, use_default_material=True):
             
         # Assert mtl file contains material definitions
         elif mtl is None:
-            raise ValueError, "'.mtl' file doesn't start with newmtl statement"
+            raise MaterialFileLoadingError("'.mtl' file doesn't start with newmtl statement")
         
         # Diffuse map component
         elif component == 'map_Kd':
@@ -79,6 +101,8 @@ def LoadMaterialsFile(filename, folder, use_default_material=True):
             if len(mtl[COMPONENT]) == 3: mtl[COMPONENT] = mtl[COMPONENT]+[1.0]
             if len(mtl[COMPONENT]) == 1: mtl[COMPONENT] = mtl[COMPONENT][0]
     
+    contents['DEFAULT_MATERIAL']={'name':'DEFAULT_MATERIAL'}
+    
     return contents
 
 def Pack_VertexData(vertices, normals=None, texcoords=None):
@@ -104,7 +128,6 @@ def tesselate_face(faces, vertices):
     tri2 = [faces[3],faces[1], faces[2]]
     
     return [get_triangle_data(tri1), get_triangle_data(tri2)]
-    
 
 def get_triangle_data(face):
     triangle = []
@@ -114,12 +137,14 @@ def get_triangle_data(face):
         # structure: vertex_indice/texcoords_indice/normal_indice
         point.append(int(w[0]))
         if len(w) >= 2 and len(w[1]) > 0: point.append(int(w[1]))# texcoords
-        else:                             point.append(0)
+        else:                             point.append(-1)
         if len(w) == 3 and len(w[2]) > 0: point.append(int(w[2]))# normals
         else:                             point.append(-1)
         triangle.append(tuple(point))
     
     return triangle
+
+
 
 def normalize_v3(arr):
     ''' Normalize a numpy array of 3 component vectors shape=(n,3) '''
@@ -129,6 +154,7 @@ def normalize_v3(arr):
     arr[:,2] /= lens                
     return arr
 
+# https://sites.google.com/site/dlampetest/python/calculating-normals-of-a-triangle-mesh-using-numpy
 def calculateMeshNormals(faces, vertices):
     #Then we create our new normal array:
 
@@ -151,7 +177,11 @@ def calculateMeshNormals(faces, vertices):
     
     return norm
 
-############### LOAD MESH FUNCTIONS #####################
+    
+
+###############################################################
+##################### LOAD MESH FUNCTIONS #####################
+###############################################################
 
 def LoadMesh(mesh_file):
     filename = os.path.basename(mesh_file)
@@ -181,9 +211,16 @@ def LoadRawMesh(mesh_file):
     try: texcoords = np.asarray(map(float, open('{}/texcoords'.format(mesh_file)).read().strip().split()), dtype='float32').reshape(-1, 2)
     except IOError: texcoords = None
     
-    vertex_data, data_format = Pack_VertexData(vertices, normals, texcoords)
+    materials_reference = LoadMaterialsFile(mesh_file, mesh_file, alternate_file_name='materials')
     
-    return {'material':indices}, vertex_data, data_format
+    # get arbitrary dictionary key
+    current_material_name = next(materials_reference.iterkeys(), None)
+    
+    vertex_data, data_format = Pack_VertexData(vertices, normals, texcoords)
+    faces_data=indices                       # indice_count, offset, byte_offset, indice_dtype
+    faces_materials = {current_material_name:(indices.shape[0],   0,           0, indices.dtype)}
+    
+    return faces_data, faces_materials, materials_reference, vertex_data, data_format
 
 def LoadObjMesh(mesh_filename):
     vertices = []
@@ -197,7 +234,7 @@ def LoadObjMesh(mesh_filename):
     hasnormals = False
     hastexcoords = False
     hasmaterial = True
-    material = None
+    material = 'DEFAULT_MATERIAL'
     
     with open(mesh_filename,"r") as file:
         for line in file.readlines():
@@ -207,27 +244,29 @@ def LoadObjMesh(mesh_filename):
             
             if not values: continue
             first_word = values[0]
-            # mesh vertexes
-            if   first_word == 'v' :
+            
+            if   first_word == 'v' :  # mesh vertexes
                 vertices.append (map(float,values[1:4])); continue
-            # mesh vertexes normals
-            elif first_word == 'vn':
+            
+            elif first_word == 'vn': # mesh vertexes normals
                 normals.append  (map(float,values[1:4])); hasnormals = True; continue
-            # mesh vertexes texcoords
-            elif first_word == 'vt':
+            
+            elif first_word == 'vt':# mesh vertexes texcoords
                 texcoords.append(map(float,values[1:3])); hastexcoords = True; continue
-            # mesh vertexes faces
-            elif first_word == 'f' :
+            
+            elif first_word == 'f' :# mesh vertexes faces
                 
                 if not len(values[1:]) == 3:
-                    assert len(values[1:]) == 4, "POLYGON to TESSELATE MUST BE QUAD"
+                    if not len(values[1:]) == 4:
+                        raise ModelLoadingError("OBJ Model '{}': Unsupported polygons at Face {}. (must be Triangles or Quads)".format(mesh_filename, values[1:]))
                     triangles = tesselate_face(values[1:], vertices)
                     
                 else:
                     triangles = [get_triangle_data(values[1:])]
                 
                 if not material in faces:
-                    assert material is not None, "Undefined Material at Face {}".format(values[1:]) # assert face info in Defined Material
+                    #if  material is None:
+                    #    raise ModelLoadingError("OBJ Model '{}': Undefined Material at Face {}.".format(mesh_filename, values[1:])) # assert face info in Defined Material
                     #assert material in materials_reference, "Unknow Material '{}' definition at Face {}".format(material, values[1:])
                     faces[material]=[]
                 
@@ -236,15 +275,22 @@ def LoadObjMesh(mesh_filename):
                 
                 continue
                 
-            elif first_word in ('usemtl','usemat'): material = values[1];continue
+            elif first_word in ('usemtl','usemat'):
+                material = values[1]
+                if 'null' in material:
+                    material='DEFAULT_MATERIAL'
+                    
+                continue
             elif first_word == 'mtllib':
-                materials_ref_file = values[1] if values[1].endswith('.mtl') else values[1]+'.mtl'
+                materials_ref_file = values[1] if (values[1].endswith('.mtl')) else values[1]+'.mtl'
     
     materials_reference = LoadMaterialsFile(materials_ref_file, folder, use_default_material=False)
-    
+    #if current_material_name is None:
+    #    raise MaterialFileLoadingError("OBJ Model '{}': Empty material file.")
+        
     for material in faces:
         if not material in materials_reference:
-            raise NameError('Material Name {} not Referenced in {}'.format(material, materials_ref_file) )
+            raise ModelLoadingError("OBJ Model '{}': Material Name {} not referenced in {}.".format(mesh_filename, material, materials_ref_file) )
     
     VERTICES = []
     NORMALS  = []
@@ -263,34 +309,124 @@ def LoadObjMesh(mesh_filename):
                     a,b,c = vertex_data
                     
                     VERTICES.append(vertices[a-1]) # OBJ file index start at 1
-                    TEXCOORDS.append(texcoords[b-1]) # OBJ file index start at 1
+                    if b is not -1:
+                        TEXCOORDS.append(texcoords[b-1]) # OBJ file index start at 1
+                    
                     if c is not -1: # OBJ file has normals
                         NORMALS.append(normals[c-1]) # OBJ file index start at 1
-                    else:           # OBJ file doesn't have normals
-                        NORMALS.append((0,0,1))
-                        has_normals = False
                     
                     INDICE_REF[vertex_data] = INDICE
                     triangle[i]= INDICE
                     
                     INDICE+=1
     
+    faces_materials = {}
+    
+    offset = 0
+    byte_offset = 0
     
     for material in faces:
-        faces[material] = np.asarray(faces[material], 'uint16').ravel()
+        faces[material] = array = np.asarray(faces[material], 'uint16').ravel()
+        faces_materials[material] = (array.shape[0], offset, byte_offset, array.dtype)
+        
+        offset+= array.shape[0]
+        byte_offset+= array.shape[0]*array.dtype.itemsize
+    
+    faces_data = np.vstack([ faces[material].reshape(-1,3) for material in faces])
     
     VERTICES  = np.asarray(VERTICES, 'float32')
     
-    if not has_normals: 
-        FACES = np.vstack([ faces[material].reshape(-1,3) for material in faces])
-        NORMALS = calculateMeshNormals(FACES, VERTICES)
+    if not NORMALS:
+        NORMALS = calculateMeshNormals(faces_data, VERTICES)
     else:
         NORMALS = np.asarray(NORMALS, 'float32')
-        
-    TEXCOORDS = np.asarray(TEXCOORDS, 'float32')
+    
+    if not TEXCOORDS:
+        TEXCOORDS = None
+    else:
+        TEXCOORDS = np.asarray(TEXCOORDS, 'float32')
     
     vertex_data, data_format = Pack_VertexData(VERTICES, NORMALS, TEXCOORDS)
     
-    return faces, materials_reference, vertex_data, data_format
+    return faces_data, faces_materials, materials_reference, vertex_data, data_format
     
+"""
+def Load3dsMesh(mesh_filename):
+    import dom3ds
+    
+    DOMFILE = dom3ds.read_3ds_file(meshfilename,tight=False, recover=True)
+    
+    def CreateMaterial(mat):
+        #  "transparency", _pctf(mat.transparency.pct, 1.0)
+        return {"shininess": _pctf(mat.shininess.pct, 0.0),
+                "ambient":_colorf(mat.ambient.color, 1.0, 1.0),
+                "diffuse": _colorf(mat.diffuse.color, 1.0, 1.0),
+                "specular": _colorf(mat.specular.color, 1.0, 1.0),
+                "diffuse_texture": mat.texmap.filename.value,
+                "cull_face": mat.two_side is None,
+                "illumination_mode": 2}
+    
+    materials_reference = {}
+    for mat in DOM.mdata.materials:
+        materials_reference[mat.name.value]=CreateMaterial(mat)
+    
+    
+    def CreateMesh(name, obj):
+        facearray = np.array(obj.faces.array[:,:3])
+        # face smoothin boolean
+        #obj.faces.smoothing.array
+        pointarray = obj.points.array
+        tvertarray = obj.texverts.array
+        print facearray.shape, facearray.dtype
+        print pointarray.shape, pointarray.dtype
+        print tvertarray.shape, tvertarray.dtype
+        
+        faces_materials = {}
+        
+        offset = 0
+        byte_offset = 0
+        
+        for material in obj.faces.materials:
+            array = m.array
+            print material.name , (array.shape[0], offset, byte_offset, array.dtype)
+            faces_materials[material.name] = (array.shape[0], offset, byte_offset, array.dtype)
+            
+            offset+= array.shape[0]
+            byte_offset+= array.shape[0]*array.dtype.itemsize
+        
+        
+    for i,nobj in enumerate(DOM.mdata.objects):
+        obj = nobj.obj
+        if type(obj) is not dom3ds.N_TRI_OBJECT:
+            continue
+        if obj.faces is None:
+            continue
+        if obj.faces.nfaces < 1:
+            continue
+        print 'OBJECT{}'.format(i), nobj.name
+        #kfnode = kfobj.get(nobj.name)
+        CreateMesh(nobj.name,obj)
+        print
 
+
+###########################
+
+def _colorf(color,alpha,default):
+    if color is None:
+        return (default,default,default,alpha)
+    
+    if isinstance(color, dom3ds.COLOR_24):
+        return (color.red*0.0039215, color.green*0.0039215, color.blue*0.0039215, alpha)
+    
+    return (color.red,color.green,color.blue,alpha)
+
+
+def _pctf(pct,default):
+    if pct is None:
+        return default
+    
+    if isinstance(pct, dom3ds.INT_PERCENTAGE):
+        return pct.value*0.01
+    
+    return pct.value
+"""

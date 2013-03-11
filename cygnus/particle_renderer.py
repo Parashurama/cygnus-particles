@@ -35,15 +35,17 @@ class Renderer(object):
         
     __enter__ = SetState
     __exit__ = UnsetState
-    
+
 class PointRenderer(Renderer):
     flag='POINT_RENDERER'
     def __init__(self,  point_size=1.0,
                         feather = 0.0,
-                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)):
+                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA),
+                        distance_attenuation=False):
         self.feather_radius = feather
         self.point_size = point_size
         self.blending = blending
+        self.distance_attenuation = distance_attenuation
         
     def BuildRenderState(self, *buffer_objects):
         
@@ -96,10 +98,19 @@ class PointRenderer(Renderer):
         glUniform1f( Uniforms['PARTICLE_FEATHER_RADIUS'], self.feather_radius)
         glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *emitter.particle_template.color)
         
+        if self.distance_attenuation:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], True)
+        else:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], False)
+        
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
         
-        glBlendFunc(*self.blending)
+        if self.blending is None:
+            glDisable(GL_BLEND)
+        else:
+            glDisable(GL_DEPTH_TEST)
+            glBlendFunc(*self.blending)
         
         self.render_state.bind()
         
@@ -110,11 +121,13 @@ class PointSpriteRenderer(PointRenderer):
     def __init__(self,  texture,
                         point_size=None,
                         feather = 0.0,
-                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)):
+                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA),
+                        distance_attenuation=False):
         self.texture = texture
         self.feather_radius = feather
         self.point_size =  point_size or max( texture.width, texture.height )
         self.blending = blending
+        self.distance_attenuation = distance_attenuation
         
     def SetState(self):
         
@@ -144,10 +157,20 @@ class PointSpriteRenderer(PointRenderer):
         glUniform1f( Uniforms['PARTICLE_FEATHER_RADIUS'], self.feather_radius)
         glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *emitter.particle_template.color)
         
+        if self.distance_attenuation:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], True)
+        else:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], False)
+        
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
         
-        glBlendFunc(*self.blending)
+        if self.blending is None:
+            glDisable(GL_BLEND)
+        else:
+            glDisable(GL_DEPTH_TEST)
+            glBlendFunc(*self.blending)
+        
         
         self.render_state.bind()
         
@@ -158,12 +181,14 @@ class AnimatedPointSpriteRenderer(PointRenderer):
     def __init__(self,  texture,
                         point_size=None,
                         feather = 0.0,
-                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)):
+                        blending =(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA),
+                        distance_attenuation=False):
                             
         self.texture = texture
         self.feather_radius = feather
         self.point_size =  point_size or max( texture.width, texture.height )
         self.blending = blending
+        self.distance_attenuation = distance_attenuation
         
     def SetState(self):
         
@@ -193,10 +218,20 @@ class AnimatedPointSpriteRenderer(PointRenderer):
         glUniform1f( Uniforms['PARTICLE_FEATHER_RADIUS'], self.feather_radius)
         glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *emitter.particle_template.color)
         
+        if self.distance_attenuation:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], True)
+        else:
+            glUniform1i(Uniforms['hasDistanceAttenuation'], False)
+        
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
         
-        glBlendFunc(*self.blending)
+        if self.blending is None:
+            glDisable(GL_BLEND)
+        else:
+            glDisable(GL_DEPTH_TEST)
+            glBlendFunc(*self.blending)
+        
         
         self.render_state.bind()
         
@@ -209,8 +244,6 @@ MESH_ATTRIBUTES_LIST_NO_TEXTURE_LIGHTING = {'position':'Vertex_Position', 'norma
 MESH_ATTRIBUTES_LIST_TEXTURED_NO_LIGHTING = {'position':'Vertex_Position', 'texcoord':'Vertex_TexCoords'}
 MESH_ATTRIBUTES_LIST_TEXTURED_LIGHTING = {'position':'Vertex_Position', 'texcoord':'Vertex_TexCoords', 'normal':'Vertex_Normals'}
 
-DEFAULT_MATERIAL = glMaterial(data={'name':'DEFAULT_MATERIAL'})
-
 class ParticleMeshRenderer(Renderer):
     flag='MESH_RENDERER'
     def __init__(self,  mesh_file,
@@ -218,8 +251,6 @@ class ParticleMeshRenderer(Renderer):
                         blending=None):
         
         self.mesh_object = Mesh.fromMeshFile(mesh_file)
-        #print "mesh_hasTexturing",self.mesh_object.hasTexturing , self.mesh_object.mesh_materials.use_texturing
-        #print "mesh_hasLighting", self.mesh_object.hasLighting, self.mesh_object.mesh_materials.use_lighting
         self.mesh_hasTexturing = (self.mesh_object.hasTexturing and self.mesh_object.mesh_materials.use_texturing)
         self.mesh_hasLighting  = (self.mesh_object.hasLighting and self.mesh_object.mesh_materials.use_lighting)
         
@@ -229,7 +260,7 @@ class ParticleMeshRenderer(Renderer):
         else:
             self.set_state_function = self.SetState_noMaterial
             self.render_shader = cVars.MeshRenderShader
-        print "render_shaerr", self.set_state_function
+        
         self.point_size =  size
         self.blending = blending
         
@@ -276,7 +307,7 @@ class ParticleMeshRenderer(Renderer):
                 glVertexAttribPointer( Attributes['Instance_Age'], 1, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(28) )
                 glVertexAttribDivisorARB( Attributes['Instance_Age'], 1)
                 
-                #self.mesh_object.IBO_Vertex_Indices.bind()
+                self.mesh_object.IBO_Vertex_Indices.bind()
                 
         self.render_state = self.VAO0
         
@@ -308,13 +339,7 @@ class ParticleMeshRenderer(Renderer):
         
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
         glUniformMatrix4fv(Uniforms['ModelView'], 1, False, cVars.Current_Camera.view_matrix)
-        """
-        if self.mesh_hasTexturing:
-            glBindTexture(GL_TEXTURE_2D, self.mesh_material.diffuse_texture.id)
-            glUniform1i( Uniforms['hasDiffuseTexture'], True)
-        else:
-            glUniform1i( Uniforms['hasDiffuseTexture'], False)
-        """
+        
         if self.blending is not None:
             glBlendFunc(*self.blending)
             glDisable(GL_CULL_FACE)
@@ -345,7 +370,7 @@ class ParticleMeshRenderer(Renderer):
               glUniform1f( Uniforms['GROWTH_FACTOR'], self.growth_controller.growth)
         else: glUniform1f( Uniforms['GROWTH_FACTOR'], 0.0)
         
-        glUniform1f( Uniforms['PARTICLE_SIZE'], 0.1)#(emitter.particle_template.point_size or self.point_size)/2)
+        glUniform1f( Uniforms['PARTICLE_SIZE'], self.point_size)#(emitter.particle_template.point_size or self.point_size)/2)
         glUniform4f( Uniforms['DEFAULT_PARTICLE_COLOR'], *emitter.particle_template.color)
         
         glUniformMatrix4fv(Uniforms['ModelViewProjection'], 1, False, cVars.Current_Camera.projection_view_matrix)
@@ -362,7 +387,7 @@ class ParticleMeshRenderer(Renderer):
             glEnable(GL_CULL_FACE)
         
         self.render_state.bind()
-        # self.mesh_material.Setup(Uniforms)
+        
         
     def SetState(self):
         self.set_state_function()

@@ -12,20 +12,19 @@ from exemple_camera_class     import CameraObject
 import cygnus
 import OpenGL.GL as gl
 
-from cygnus import Particle, Mesh, Template, Texture2D, AnimatedTexture
+from cygnus import Particle, Template, Texture2D, AnimatedTexture
 from cygnus.particle_domain     import Triangle, Square, Line, Disc, Sphere
 from cygnus.particle_controller import LifeTime, Collector, Gravity, ColorBlender, Growth, Magnet, Bounce
 from cygnus.particle_renderer   import PointRenderer, PointSpriteRenderer, AnimatedPointSpriteRenderer#, MeshRenderer
 from cygnus.particle_emitter    import Emitter, PerParticleEmitter
-from cygnus.particle_mesh_emitter import MeshEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles4 MeshEmitter', vsync=False)   
+    window = PygletWindow(1440,800, caption='TestParticles3 SphereEmitter', vsync=False)   
     cygnus.Init()
     
-    CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
-                            rotation= (0.0,0.0,0.0))
+    CAMERA_0 = CameraObject(translation = (0.0, 0.0, -192.0),
+                            rotation=     (14.0, -57.0, 0.0))
     cygnus.Set_Camera(CAMERA_0)
     
     GetTick = Timer()
@@ -67,20 +66,17 @@ if __name__ == '__main__':
             if symbol == key.F4: raise SystemExit
             if symbol == key.ENTER: window.ToggleFullscreen()
     
-    MeshEmitter(name='Test1',
-                position=(720.0, 450.0),
-                mesh = Mesh.fromMeshFile('ressources/meshes/bunny2'),
-                fire_rate=100000,
-                particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
-                particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
-                                                velocity= (5.0, 5.0, 5.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
-                                                age = 1.0 ),
-                controllers = [ LifeTime(1.0) ],
-                
-                renderer = PointRenderer( point_size=4.0, feather = 2.0,
-                                       blending=(gl.GL_SRC_ALPHA, gl.GL_ONE))
-                
-                )
+    Emitter(name='Test1',
+            position=Sphere((720.0, 450.0, 0.0), 0, 75),
+            fire_rate=200000,
+            particle_template = Particle( position = (0.0, 0.0, 0.0), velocity = (0.0, 0.0, 0.0), color = (1.0,0.4,1.0,0.7) ),
+            particle_deviation = Template(  position = (0.0, 0.0, 0.0),#(0.0, 0.0, 0.0),
+                                            velocity= (5.0, 5.0, 5.0),#(35.0,35.0, 0.0),#(0.0,0.0, 0.0),#
+                                            age = 1.0 ),
+            controllers = [ LifeTime(1.0) ],
+            renderer = PointRenderer( point_size=4.0, feather = 2.0,
+                                      blending=(gl.GL_SRC_ALPHA, gl.GL_ONE))
+            )
     
     
     pyglet.app.run()

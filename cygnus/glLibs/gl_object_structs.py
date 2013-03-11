@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # *-* coding: UTF-8 *-*
+
 from OpenGL.GL import *
 from ..__globals__ import cVars
 from glObjects import BufferObject
@@ -34,10 +35,15 @@ class glMaterial(object):
             if self.bump_texture is not None:
                 self.bump_texture = cVars.default_image_manager.GetTexture( self.bump_texture, GLTexture2D, anisotropic=True, repeat_texture=True)
                 self.isTextured = True
-            self.setup_material = self.setup_lighting
+            
+            if self.specular_texture is not None:
+                self.specular_texture = cVars.default_image_manager.GetTexture( self.specular_texture, GLTexture2D,repeat_texture=True)
+                self.isTextured = True
+                
+            self.setup = self.setup_lighting
         else:
             self.bump_texture = None
-            self.setup_material = self.setup_no_lighting
+            self.setup = self.setup_no_lighting
     
     def setup_no_lighting(self, Uniforms):
         if self.isTextured is True:
@@ -73,26 +79,25 @@ class glMaterial(object):
         glUniform1f(Uniforms["material.shininess"], self.shininess)
 
 class glMaterialSubMesh(glMaterial):
-    def __init__(self, data, indices):
-        glMaterial.__init__(self, data)
+    def __init__(self, material, material_faces_data):
+        glMaterial.__init__(self, material)
         
-        assert indices.dtype == 'uint16' and indices.ndim == 1 and indices.shape[0]%3==0
+        indices_count, offset, byte_offset, indices_dtype = material_faces_data
+        
+        assert indices_dtype == 'uint16'
+        
         self.primitive_type = GL_TRIANGLES
         
-        self.indices_count = indices.shape[0]
+        self.indices_count = indices_count
+        self.indices_byte_offset = byte_offset
         self.indices_type = GL_UNSIGNED_SHORT
-        self.indices_offset = 0
-        
-        self.IBO_Vertex_Indices = BufferObject(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW )
-        
-    def setup(self, Uniforms):
-        self.setup_material(Uniforms)
-        self.IBO_Vertex_Indices.bind()
+
+DEFAULT_MATERIAL = glMaterial(data={'name':'DEFAULT_MATERIAL'})
 
 # Pseudo Iterator Object
 class MaterialManager(object):
     def __init__(self, faces_materials, material_definitions):
-        self.materials = [ glMaterialSubMesh(material_definitions[material_name], material_faces) for material_name, material_faces in faces_materials.iteritems() ]
+        self.materials = [ glMaterialSubMesh(material_definitions[material_name], material_faces_data) for material_name, material_faces_data in faces_materials.iteritems() ]
         
         self.use_texturing = any([ material.isTextured for material in self.materials])
         self.use_lighting = any([ material.illumination_mode for material in self.materials])

@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# *-* coding: UTF-8 *-*
+
 import numbers, math
 
 class Vec2(object):
@@ -101,7 +104,7 @@ class Vec3(object):
     def __init__(self, x, y, z):
         self.x = float(x)
         self.y = float(y)
-        self.z = float(y)
+        self.z = float(z)
         
     def __iadd__(self, value):
         if isinstance(value, numbers.Number):

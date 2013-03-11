@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # *-* coding: UTF-8 *-*
+
 from __globals__ import cVars
 
 from particle_system import ParticleSystem

@@ -1,6 +1,8 @@
 #version 330
-#define BLINN_PHONG_LIGHTING
-//#define PHONG_LIGHTING
+//#define BLINN_PHONG_LIGHTING
+#define PHONG_LIGHTING
+
+#define SPECULAR_COLOR_HACK_CORRECTION 0.5
 
 smooth in vec3 vNormals;
 smooth in vec3 vLightVec;
@@ -54,7 +56,7 @@ void main()
     
     if (hasNormalTexture)
     {   // Mess around with this value to increase/decrease normal perturbation
-        float maxVariance = 2.0 + NormalMultiplier; 
+        float maxVariance = 2.0 * NormalMultiplier; 
         float minVariance = maxVariance *0.5;
         
         normalAdjusted = normalize(vNormals + (texture2D(Normal_Texture0, vTexCoords0).xyz * maxVariance - minVariance));
@@ -77,7 +79,7 @@ void main()
     vec4 Idiff = light.diffuse * max( cosTheta, 0.0 ) *material.diffuse;
     
     // calculate Specular Term:
-    if  ( material.shininess > 0.01 )
+    if  ( material.shininess > 0.0001 )
     {   
         #if   defined(PHONG_LIGHTING)
         float cosAlpha = dot(reflect(-lVec, normalAdjusted), vVec); // for Phong Specular componnent
@@ -95,6 +97,6 @@ void main()
         Ispec = vec4(0.0);
     }
     
-    gl_FragColor = (DEFAULT_PARTICLE_COLOR*vLColor*TexColor*(Iamb + Idiff) + Ispec);
+    gl_FragColor = (DEFAULT_PARTICLE_COLOR*vLColor*TexColor*(Iamb + Idiff) + Ispec*SPECULAR_COLOR_HACK_CORRECTION);
     
 } 

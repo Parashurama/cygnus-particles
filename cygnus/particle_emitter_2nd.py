@@ -91,12 +91,7 @@ class PerParticleEmitter(BasicEmitter):
     
     def set_emitter_uniforms(self):
         BLOCK_EMITTER_UNIFORMS = EMITTER_SECONDARY_UNIFORMS_SRC_DATA.copy()
-        """
-        if 'LIFETIME_CONTROLLER' in self.particle_template.controller_flags:
-              BLOCK_EMITTER_UNIFORMS['SUB_EMITTER_PARTICLE_LIFETIME'][1] = [self.controller_flags['LIFETIME_CONTROLLER'].lifetime]
-        else: BLOCK_EMITTER_UNIFORMS['SUB_EMITTER_PARTICLE_LIFETIME'][1] = [1800]
-        """
-        #BLOCK_EMITTER_UNIFORMS['PER_PARTICLE_EMITTER_PARTICLE_FIRERATE'][1] = [1/float(self.emitter_fire_rate)]
+        
         BLOCK_EMITTER_UNIFORMS['PER_PARTICLE_EMITTER_PARTICLE_POSITION_DEVIATION'][1] = list(self.particle_deviation['position'])
         BLOCK_EMITTER_UNIFORMS['PER_PARTICLE_EMITTER_PARTICLE_VELOCITY_DEVIATION'][1] = list(self.particle_deviation['velocity'])
         BLOCK_EMITTER_UNIFORMS['PER_PARTICLE_EMITTER_PARTICLE_AGE_DEVIATION'][1] = [self.particle_deviation['age']]
@@ -118,7 +113,7 @@ class PerParticleEmitter(BasicEmitter):
         glEnableVertexAttribArray( Attributes['Position'] )
         
         glVertexAttribPointer( Attributes['Position'], 3, GL_FLOAT,False, VBO_STRIDE, ctypes.c_void_p(0) )
-
+        
         ##########################
         
         self.VAO_B_Emit=VertexArrayObject()
@@ -195,7 +190,7 @@ def update_particles(self, dt):
     if 'GRAVITY_CONTROLLER' in self.controller_flags:
           glUniform3f( Uniforms['GRAVITY'], *self.controller_flags['GRAVITY_CONTROLLER'].gravity )
     else: glUniform3f( Uniforms['GRAVITY'], 0.0, 0.0, 0.0 )
-        
+    
     glUniform1f( Uniforms['dtime'], dt)
     
     with TransformFeedback(self.VBO_FeedBack, GL_POINTS, byte_offset=byte_offset, query=self.QO_FeedBack):

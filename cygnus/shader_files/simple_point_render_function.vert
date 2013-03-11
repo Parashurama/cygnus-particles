@@ -22,11 +22,14 @@ uniform float PARTICLE_SIZE;
 uniform float animation_fps = 1/15.0;
 uniform int nFrames = 25;
 
-uniform vec3 DISTANCE_ATTENUATION = vec3( 1.0, 0.0, 0.00001);
+
+uniform bool hasDistanceAttenuation;
+uniform vec3 DISTANCE_ATTENUATION = vec3( 1.0, 0.0001, 0.000001);
+//uniform vec3 DISTANCE_ATTENUATION = vec3( 1.0, 0.0, 0.00001);
 //uniform vec3 DISTANCE_ATTENUATION = vec3( 1.0, 0.0, 0.0);
 
 void main()
-{   
+{   float attenuation_factor;
     SpriteAnimationFrame = float(int(Age/animation_fps)% nFrames);
     
     if ( COLOR_BLENDING == 1)
@@ -34,9 +37,16 @@ void main()
     else
         vLColor = vec4(1.0);
     
-    float Distance = -(ModelView*vec4(Position, 1.0 )).z; // Calculate Eye vector (z component is distance from camera)
+    if (hasDistanceAttenuation)
+    {
+        float Distance = -(ModelView*vec4(Position, 1.0 )).z; // Calculate Eye vector (z component is distance from camera)
+        attenuation_factor = sqrt(1.0 / (DISTANCE_ATTENUATION.x + (DISTANCE_ATTENUATION.y + DISTANCE_ATTENUATION.z*Distance)*Distance ));
+    }
     
-    float attenuation_factor = sqrt(1.0 / (DISTANCE_ATTENUATION.x + (DISTANCE_ATTENUATION.y + DISTANCE_ATTENUATION.z*Distance)*Distance ));
+    else
+    {
+        attenuation_factor = 1.0;
+    }
     
     // Set current vertex point size (needs 'glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)' to work)
     gl_PointSize = vPointSize = attenuation_factor * (PARTICLE_SIZE + Age * GROWTH_FACTOR);

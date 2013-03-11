@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # *-* coding: UTF-8 *-*
+
 from OpenGL.GL import *
 from OpenGL.GL.NV.transform_feedback import GL_RASTERIZER_DISCARD_NV
 
@@ -31,6 +32,7 @@ class ParticleSystem(object):
         glDisable(GL_RASTERIZER_DISCARD)
         
     def render(self):
+        #self.default_env.RenderLight()
         
         glActiveTexture(GL_TEXTURE0)            
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)

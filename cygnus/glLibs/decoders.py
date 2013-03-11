@@ -3,6 +3,8 @@ import numpy as np
 import pyglet
 from pyglet.image.codecs.gdkpixbuf2 import GdkPixbuf2ImageDecoder as PygletDecoder, gdkpixbuf, gdk
 from pyglet.image.codecs.pil import PILImageDecoder as PILDecoder
+from pyglet.image.codecs.dds import DDSImageDecoder as DDSDecoder
+
 from ctypes import *
 
 class CustomPILDecoder(PILDecoder):
@@ -18,6 +20,10 @@ class CustomPILDecoder(PILDecoder):
         self.data = np.asarray(image, 'B')
 
         return self
+
+#class DDS_Decoder(DDSDecoder):
+    
+
 
 class PNG_Decoder(PygletDecoder):    
     def _pixbuf_to_image(self, pixbuf):

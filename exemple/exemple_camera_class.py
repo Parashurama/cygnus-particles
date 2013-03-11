@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# *-* coding: UTF-8 *-*
 
 from OpenGL.GL import *
 import numpy as np
@@ -102,13 +104,13 @@ class CameraObject(object):
     #    self.FrustumCenter = camera_position+self.ViewVector*((far-near)*0.5)
     
     def UpdateFrustum(self):
-        print self.camera_translation, self.camera_rotation
+        
         translation_matrix = Mat4_TranslationMatrix(*self.camera_translation)
         rotation_matrix    = Mat4_RotationMatrix(*self.camera_rotation)
-        
+        print self.camera_translation
+        print self.camera_rotation
         self.normal_matrix = Mat4_to_Mat3(rotation_matrix)
         self.view_matrix = np.dot(Mat4_TranslationMatrix(-700.0, -450.0, 0.0) , np.dot(rotation_matrix, translation_matrix))
-        #self.view_matrix = Mat4_TranslationMatrix(*self.camera_translation)*Mat4_RotationMatrix(*self.camera_rotation)*Mat4_TranslationMatrix(-700.0, -450.0, 0.0)
         
         self.projection_view_matrix = np.dot(self.view_matrix,self.projection_matrix)
         
@@ -117,8 +119,8 @@ class CameraObject(object):
         
     def RotateCamera(self,a=None,b=None,c=None):
         
-        if a: self.camera_rotation.y+=a
-        if c: self.camera_rotation.x+=c
+        if a is not None: self.camera_rotation.y+=a
+        if c is not None: self.camera_rotation.x+=c
         
         #Rotation = Mat4_RotationMatrix(*self.camera_rotation)
         #self.ViewVector=Rotation * (self.DefaultViewVector)

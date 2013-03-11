@@ -21,11 +21,11 @@ from cygnus.particle_mesh_emitter import MeshEmitter
 
 if __name__ == '__main__':
     
-    window = PygletWindow(1440,800, caption='TestParticles0', vsync=False, resizable=True)   
+    window = PygletWindow(1440,800, caption='TestParticles5', vsync=False, resizable=True)   
     cygnus.Init()
     
-    CAMERA_0 = CameraObject(translation = (0.0,0.0,0.0),
-                            rotation= (0.0,0.0,0.0))
+    CAMERA_0 = CameraObject(translation = (0.0, 0.0, -128.0),
+                            rotation= (-28.0, -14.0, 0.0))
     cygnus.Set_Camera(CAMERA_0)
     
     GetTick = Timer()
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     @window.event
     def on_mouse_press(x, y, button, modifiers):
         if button == 1: # LEFT_CLICK
-            cygnus.GetObjectfromName('Test1').Emit(150)
+            cygnus.GetObjectfromName('Test1').Emit(10)
         
     @window.event
     def on_mouse_drag(x, y, dx, dy, button, modifiers):
@@ -87,8 +87,12 @@ if __name__ == '__main__':
             controllers = [ LifeTime(10.0) ],#+DOMAIN_CONTROLLERS,
             
             
+            #renderer = ParticleMeshRenderer('ressources/meshes/connor/Connor_Kenway.obj', blending=None, size=1)
+            #renderer = ParticleMeshRenderer('ressources/meshes/dragon/dragon.obj', blending=None, size=1)
+            #renderer = ParticleMeshRenderer('ressources/meshes/bunny_watertight_s.obj', blending=None)
             #renderer = ParticleMeshRenderer('ressources/meshes/bunny2', blending=None)
             renderer = ParticleMeshRenderer('ressources/meshes/raptor/raptor.obj', blending=None)
+            #renderer = ParticleMeshRenderer('ressources/meshes/darkelf_f_armor/DarkElf11.obj', blending=None, size=3)
             )
     
     

@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# *-* coding: UTF-8 *-*
 
 EMITTER_UNIFORMS_LIST = [
 'EMITTER_TYPE',

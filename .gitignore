@@ -36,4 +36,6 @@ nosetests.xml
 
 #list of exemples
 
-exemple/list_of_exemple.py
+exemple/list_exemples.py
+
+GIT_COMMANDS
